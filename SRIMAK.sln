@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SRIMAK", "SRIMAK.csproj", "{218F7108-550C-4642-970A-685BE3F57E59}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{218F7108-550C-4642-970A-685BE3F57E59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{218F7108-550C-4642-970A-685BE3F57E59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{218F7108-550C-4642-970A-685BE3F57E59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{218F7108-550C-4642-970A-685BE3F57E59}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B58B5C4F-2A7B-41E5-B9D2-863F6027C834}
+	EndGlobalSection
+EndGlobal
