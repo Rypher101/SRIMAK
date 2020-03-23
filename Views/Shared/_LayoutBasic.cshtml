@@ -35,11 +35,11 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-md-2">
-                            <div id="colorlib-logo"><a href="@Url.Action("Index","Home")">S R I M A K</a></div>
+                            <div id="colorlib-logo"><a href="index.html">S R I M A K</a></div>
                         </div>
                         <div class="col-md-10 text-right menu-1">
                             <ul>
-                                <li class="active"><a href="@Url.Action("Index","Home")">Home</a></li>
+                                <li>@Html.ActionLink("Home","Index","Home")</li>
                                 <li class="has-dropdown">
                                     <a href="work.html">Works</a>
                                     <ul class="dropdown">
@@ -50,7 +50,7 @@
                                 <li><a href="services.html">Services</a></li>
                                 <li><a href="blog.html">Blog</a></li>
                                 <li><a href="about.html">About</a></li>
-                                <li><a href="shop.html">Login</a></li>
+                                <li class="active">@Html.ActionLink("Login","Index","Login")</li>
                                 <li><a href="contact.html">Contact</a></li>
                             </ul>
                         </div>
@@ -58,69 +58,29 @@
                 </div>
             </div>
         </nav>
-        <section id="home" class="video-hero" style="height: 700px; background-image: url(images/water_1.jpg);  background-size:cover; background-position: center center;background-attachment:fixed;" data-section="home">
+        <section id="home" class="video-hero" style="height: 80px; background-image: url(images/water_1.jpg);  background-size:cover; background-position: center center;background-attachment:fixed;" data-section="home">
             <div class="overlay"></div>
-         
-            <div class="display-t text-center">
-                <div class="display-tc">
-                    <div class="container">
-                        <div class="col-md-12 col-md-offset-0">
-                            <div class="animate-box">
-                                <h2>Pure Water is the World’s First and Foremost Medicine</h2>
-                                <p><a href="@Url.Action("Index","Login")" class="btn btn-primary btn-lg btn-custom">Log In</a></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </section>
-        <div class="colorlib-featured">
-            <div class="row animate-box">
-                <div class="featured-wrap">
-                    <div class="owl-carousel">
-                        <div class="item">
-                            <div class="col-md-8 col-md-offset-2">
-                                <div class="featured-entry">
-                                    <img class="img-responsive" src="~/images/dashboard_full_1.jpg" alt="">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="col-md-8 col-md-offset-2">
-                                <div class="featured-entry">
-                                    <img class="img-responsive" src="~/images/dashboard_full_2.png" alt="">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="col-md-8 col-md-offset-2">
-                                <div class="featured-entry">
-                                    <img class="img-responsive" src="~/images/dashboard_full_3.jpg" alt="">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="col-md-8 col-md-offset-2">
-                                <div class="featured-entry">
-                                    <img class="img-responsive" src="~/images/dashboard_full_4.jpg" alt="">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <div class="row">
+            <div class="col-md-6 margin-top-20">
+                <div class="container">
+                    <main role="main" class="pb-3">
+                        @RenderBody()
+                    </main>
                 </div>
             </div>
         </div>
-        <div class="container">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
-        </div>
-
-        <footer class="border-top footer text-muted">
-            <div class="container">
-                &copy; 2020 - SRIMAK - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        <div class="row">
+            <div class="col-md-2">
+                <br/>
+                <br/>
+                <footer class="border-top footer text-muted">
+                    <div class="container">
+                        &copy; 2020 - SRIMAK - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    </div>
+                </footer>
             </div>
-        </footer>
+        </div>
     </div>
     <!-- jQuery -->
     <script src="~/js/jquery.min.js"></script>

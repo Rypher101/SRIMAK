@@ -1,0 +1,36 @@
+﻿@model SRIMAK.Models.LoginModel
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_LayoutBasic.cshtml";
+}
+
+    <div class="row">
+        <div class="col-md-4 col-md-offset-2">
+            <h2>Member Login</h2>
+            <p><font color="red">@ViewData["Message"]</font></p>
+        </div>
+        <hr />
+        <div class="col-md-4 col-md-offset-6">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="form-group">
+                    <label asp-for="UserName" class="control-label"></label>
+                    <input asp-for="UserName" class="form-control" />
+                    <span asp-validation-for="UserName" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Password" class="control-label"></label>
+                    <input asp-for="Password" class="form-control" type="password"/>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Log In" class="btn btn-default" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

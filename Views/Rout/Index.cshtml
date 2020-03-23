@@ -1,0 +1,47 @@
+﻿@model IEnumerable<SRIMAK.Models.RoutModel>
+
+@{
+    ViewData["Title"] = "Rout Details";
+    Layout = "~/Views/Shared/_LayoutBasic.cshtml";
+}
+
+<h2>Rout Details</h2>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.RoutId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Town)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.RoutId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Town)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.User)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new {  id=item.RoutId  }) |
+                @Html.ActionLink("Delete", "Delete", new { id=item.RoutId})
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
