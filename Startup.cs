@@ -25,7 +25,8 @@ namespace SRIMAK
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-            services.AddTransient<DBConnection>(_ => new DBConnection("server=localhost; port=3308; database=srimak; uid=root;"));
+            services.AddTransient<DBConnection>(_ => new DBConnection("server=localhost; port=3308; database=srimak; uid=root; Convert Zero Datetime=True;"));
+            services.AddSession(options => { options.IdleTimeout = TimeSpan.FromMinutes(10); });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -45,7 +46,7 @@ namespace SRIMAK
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseSession();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

@@ -16,8 +16,6 @@ namespace SRIMAK.Models
         [Required]
         [ProtectedPersonalData]
         public string Password { get; set; }
-
-        
     }
 
 }

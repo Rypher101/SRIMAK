@@ -1,24 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using MySql.Data.MySqlClient;
-using MySql.Data.Types;
 using SRIMAK.Models;
 
 namespace SRIMAK.Controllers
 {
     public class LoginController : Controller
     {
-        private DBConnection DBConn { get; set; }
-
         public LoginController(DBConnection DB)
         {
-            this.DBConn = DB;
+            DBConn = DB;
         }
+
+        private DBConnection DBConn { get; }
 
         // GET: Login
         public ActionResult Index()
@@ -45,35 +41,38 @@ namespace SRIMAK.Controllers
         {
             try
             {
-                var cmd = this.DBConn.Connection.CreateCommand() as MySqlCommand;
-                cmd.CommandText = @"SELECT user_id,name,email,doa,contact_number,address,type FROM user WHERE user_id=@userid AND password=@password";
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText =
+                    @"SELECT user_id,name,email,doa,contact_number,address,type FROM user WHERE user_id=@userid AND password=@password";
                 cmd.Parameters.AddWithValue("@userid", collection["UserName"]);
-                cmd.Parameters.AddWithValue("@password",collection["Password"]);
+                cmd.Parameters.AddWithValue("@password", collection["Password"]);
 
-                await using(var reader = await cmd.ExecuteReaderAsync())
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
                     while (await reader.ReadAsync())
                     {
-                        var model = new UserModel()
-                            {
-                                UserId = reader.GetFieldValue<string>(0),
-                                Name = reader.GetFieldValue<string>(1),
-                                Email = reader.GetFieldValue<string>(2),
-                                DOA = reader.GetFieldValue<DateTime>(3),
-                                Contact = reader.GetFieldValue<string>(4),
-                                Address = reader.GetFieldValue<string>(5),
-                                Type = reader.GetFieldValue<int>(6)
-                            };
-                            ViewData["Message"] = "Login complete";
-                            return View("Create");
+                        var model = new UserModel
+                        {
+                            UserId = reader.GetFieldValue<string>(0),
+                            Name = reader.GetFieldValue<string>(1),
+                            Email = reader.GetFieldValue<string>(2),
+                            DOA = reader.GetFieldValue<DateTime>(3),
+                            Contact = reader.GetFieldValue<string>(4),
+                            Address = reader.GetFieldValue<string>(5),
+                            Type = reader.GetFieldValue<int>(6)
+                        };
+                        HttpContext.Session.SetString("UID", model.UserId);
+                        HttpContext.Session.SetString("Name", model.Name);
+                        return RedirectToAction("Index", "ManagerDashboard");
                     }
+                }
 
                 ViewData["Message"] = "Invalid login credentials!";
                 return View("Create");
-                
             }
             catch (Exception message)
             {
-                System.Diagnostics.Debug.WriteLine(message);
+                Debug.WriteLine(message);
                 return View();
             }
         }
@@ -91,7 +90,7 @@ namespace SRIMAK.Controllers
         //{
         //    try
         //    {
-        //        // TODO: Add update logic here
+        //        
 
         //        return RedirectToAction(nameof(Index));
         //    }
@@ -114,7 +113,7 @@ namespace SRIMAK.Controllers
         //{
         //    try
         //    {
-        //        // TODO: Add delete logic here
+        //        
 
         //        return RedirectToAction(nameof(Index));
         //    }

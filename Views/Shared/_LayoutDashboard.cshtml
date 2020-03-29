@@ -25,11 +25,12 @@
 
 <body>
     <div class="wrapper">
-        <div class="sidebar" data-image="~/Dashboards/assets/img/test2.jpg" data-color="azure">
+        <div class="sidebar" data-image="Dashboards/assets/img/test2.jpg" data-color="azure">
+   
             <!--
-                Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
+            Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
 
-                Tip 2: you can also add an image using data-image tag
+            Tip 2: you can also add an image using data-image tag
             -->
             <div class="sidebar-wrapper">
                 <div class="logo">
@@ -124,7 +125,7 @@
                                 </div>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#pablo">
+                                <a class="nav-link" href="@Url.Action("Index","Login")">
                                     <span class="no-icon">Log out</span>
                                 </a>
                             </li>
@@ -135,23 +136,7 @@
             <!-- End Navbar -->
             <div class="content">
                 <div class="container-fluid">
-                    <div class="row">
-                        <div class="col">
-                            <div class="card ">
-                                <div class="card-header ">
-                                    <h4 class="card-title">[Title]</h4>
-                                    <p class="card-category">[Sub title]</p>
-                                </div>
-
-                                <div class="card-body">
-                                    <div>
-                                        @RenderBody()
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
+                    @RenderBody()
                 </div>
             </div>
             <footer class="footer">
@@ -160,31 +145,17 @@
                         <ul class="footer-menu">
                             <li>
                                 <a href="#">
-                                    Home
+                                   User : @ViewData["User"]
                                 </a>
                             </li>
-                            <li>
-                                <a href="#">
-                                    Company
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    Portfolio
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#">
-                                    Blog
-                                </a>
-                            </li>
+                            
                         </ul>
                         <p class="copyright text-center">
                             ©
                             <script>
                                 document.write(new Date().getFullYear())
                             </script>
-                            <a href="http://www.creative-tim.com">Creative Tim</a>, made with love for a better web
+                            <a href="#">SRIMAK</a>
                         </p>
                     </nav>
                 </div>

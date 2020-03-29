@@ -1,0 +1,85 @@
+﻿@model IEnumerable<SRIMAK.Models.RawMaterialModel>
+
+@{
+    ViewData["Title"] = "Operational Manager - Home";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Raw Materials</h4>
+                <p class="card-category">@ViewData["MatCount"] - Material(s) need attention</p>
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                    <thead>
+                    <th>
+                        Material ID
+                    </th>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Size
+                    </th>
+                    <th>
+                        QTY
+                    </th>
+                    <th>
+                        ROL
+                    </th>
+                    <th>
+                        Requested QTY
+                    </th>
+                    <th>
+                        Last Requested Date
+                    </th>
+                    </thead>
+                    <tbody>
+                        @{ var clr = "";}
+                        @foreach (var item in Model)
+                        {
+                            @if (item.QTY < item.ROL)
+                            {
+                                clr = "red";
+                            }
+                            else
+                            {
+                                clr = "";
+                            }
+                        <tr style="color: @clr">
+                            <td>
+                                @item.Id
+                            </td>
+                            <td>
+                                @item.Name
+                            </td>
+                            <td>
+                                @item.Size
+                            </td>
+                            <td>
+                                @item.QTY
+                            </td>
+                            <td>
+                                @item.ROL
+                            </td>
+                            <td>
+                                @item.Request
+                            </td>
+                            <td>
+                                @item.ReqDate
+
+                            </td>
+                        </tr>
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    
+</div>

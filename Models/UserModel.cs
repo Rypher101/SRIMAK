@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using MySql.Data.Types;
 
 namespace SRIMAK.Models
 {
@@ -15,5 +11,11 @@ namespace SRIMAK.Models
         public string Contact { get; set; }
         public string Address { get; set; }
         public int Type { get; set; }
+
+        public override string ToString()
+        {
+            return
+                $"{nameof(UserId)}: {UserId}, {nameof(Name)}: {Name}, {nameof(Email)}: {Email}, {nameof(DOA)}: {DOA}, {nameof(Contact)}: {Contact}, {nameof(Address)}: {Address}, {nameof(Type)}: {Type}";
+        }
     }
 }
