@@ -17,24 +17,20 @@ namespace SRIMAK.Controllers
         private DBConnection DBConn { get; }
 
         // GET: Login
-        public ActionResult Index()
+        public ActionResult Index(int id)
         {
+            if (id != 0)
+            {
+                ViewData["Message"] = "Invalid session";
+            }
+            else
+            {
+                HttpContext.Session.Clear();
+            }
+
             return View("Create");
         }
 
-        // GET: Login/Details/5
-        //public ActionResult Details(int id)
-        //{
-        //    return View();
-        //}
-
-        //// GET: Login/Create
-        //public ActionResult Create()
-        //{
-        //    return View();
-        //}
-
-        // POST: Login/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(IFormCollection collection)
@@ -61,6 +57,7 @@ namespace SRIMAK.Controllers
                             Address = reader.GetFieldValue<string>(5),
                             Type = reader.GetFieldValue<int>(6)
                         };
+
                         HttpContext.Session.SetString("UID", model.UserId);
                         HttpContext.Session.SetString("Name", model.Name);
                         return RedirectToAction("Index", "ManagerDashboard");
@@ -75,6 +72,12 @@ namespace SRIMAK.Controllers
                 Debug.WriteLine(message);
                 return View();
             }
+        }
+
+        public ActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return View("Create");
         }
 
         // GET: Login/Edit/5

@@ -1,0 +1,53 @@
+﻿@model SRIMAK.Models.RawMaterialModel
+
+@{
+    ViewData["Title"] = "CreateNewMaterial";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Create New Raw Materials</h4>
+            </div>
+            <div class="card-body">
+                <hr />
+                <div class="row">
+                    <div class="col-md-4 offset-4">
+                        <form asp-action="CreateNewMaterialResult">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <label>Material ID will assign by the system </label>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Name" class="control-label"></label>
+                                <input asp-for="Name" class="form-control" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Size" class="control-label"></label>
+                                <input asp-for="Size" class="form-control" />
+                                <span asp-validation-for="Size" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="QTY" class="control-label"></label>
+                                <input asp-for="QTY" class="form-control" />
+                                <span asp-validation-for="QTY" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="ROL" class="control-label"></label>
+                                <input asp-for="ROL" class="form-control" />
+                                <span asp-validation-for="ROL" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" value="Create" class="btn btn-primary" />
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

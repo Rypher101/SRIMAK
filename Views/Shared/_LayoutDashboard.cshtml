@@ -25,8 +25,8 @@
 
 <body>
     <div class="wrapper">
-        <div class="sidebar" data-image="Dashboards/assets/img/test2.jpg" data-color="azure">
-   
+        <div class="sidebar" data-image="../../Dashboards/assets/img/test2.jpg" data-color="azure">
+
             <!--
             Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
 
@@ -39,49 +39,48 @@
                     </a>
                 </div>
                 <ul class="nav">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="dashboard.html">
+                    <li class="nav-item @ViewData["Dashboard"]">
+                        <a class="nav-link" href="@Url.Action("Index","ManagerDashboard")">
                             <i class="nc-icon nc-chart-pie-35"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
-                    <li>
-                        <a class="nav-link" href="./user.html">
-                            <i class="nc-icon nc-circle-09"></i>
-                            <p>User Profile</p>
+                    <li class="nav-item @ViewData["Materials"]">
+                        <a class="nav-link " href="@Url.Action("Materials","ManagerDashboard")">
+                            <i class="nc-icon nc-grid-45"></i>
+                            <p>Raw materials</p>
                         </a>
                     </li>
-                    <li>
-                        <a class="nav-link" href="./table.html">
+                    <li class="nav-item @ViewData["Products"]">
+                        <a class="nav-link " href="./typography.html">
+                            <i class="nc-icon nc-app"></i>
+                            <p>Finished Products</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Resellers"]">
+                        <a class="nav-link " href="./typography.html">
+                            <i class="nc-icon nc-cart-simple"></i>
+                            <p>Resellers</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Suppliers"]">
+                        <a class="nav-link " href="./typography.html">
+                            <i class="nc-icon nc-bag"></i>
+                            <p>Suppliers</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Distributors"]">
+                        <a class="nav-link " href="./typography.html">
+                            <i class="nc-icon nc-delivery-fast"></i>
+                            <p>Distributors</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Purchase"]">
+                        <a class="nav-link " href="./typography.html">
                             <i class="nc-icon nc-notes"></i>
-                            <p>Table List</p>
+                            <p>Purchase Order</p>
                         </a>
                     </li>
-                    <li>
-                        <a class="nav-link" href="./typography.html">
-                            <i class="nc-icon nc-paper-2"></i>
-                            <p>Typography</p>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" href="./icons.html">
-                            <i class="nc-icon nc-atom"></i>
-                            <p>Icons</p>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" href="./maps.html">
-                            <i class="nc-icon nc-pin-3"></i>
-                            <p>Maps</p>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-link" href="./notifications.html">
-                            <i class="nc-icon nc-bell-55"></i>
-                            <p>Notifications</p>
-                        </a>
-                    </li>
-
                 </ul>
             </div>
         </div>
@@ -125,7 +124,7 @@
                                 </div>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index","Login")">
+                                <a class="nav-link" href="@Url.Action("Logout","Login")">
                                     <span class="no-icon">Log out</span>
                                 </a>
                             </li>
@@ -145,10 +144,10 @@
                         <ul class="footer-menu">
                             <li>
                                 <a href="#">
-                                   User : @ViewData["User"]
+                                    User : @TempData["User"]
                                 </a>
                             </li>
-                            
+
                         </ul>
                         <p class="copyright text-center">
                             ©
@@ -178,15 +177,17 @@
     <script src="~/Dashboards/assets/js/light-bootstrap-dashboard.js?v=2.0.0 " type="text/javascript"></script>
     <!-- Light Bootstrap Dashboard DEMO methods, don't include it in your project! -->
     <script src="~/Dashboards/assets/js/demo.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function () {
-            // Javascript method's body can be found in assets/js/demos.js
-            //demo.initDashboardPageCharts();
+    @if (TempData["Message"] != null)
+    {
+        <script type="text/javascript">
+            $(document).ready(function () {
 
-            //demo.showNotification();
+                demo.showNotification("@TempData["Message"]", "@TempData["MsgType"]");
 
-        });
-    </script>
-@RenderSection("Scripts", required: false)
+            });
+        </script>
+    }
+
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

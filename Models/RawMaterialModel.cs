@@ -10,13 +10,17 @@ namespace SRIMAK.Models
     public class RawMaterialModel
     {
         [Display(Name = "Material ID")]
-        public string Id { get; set; }
+        public int Id { get; set; }
 
         public string Name { get; set; }
         public int Size { get; set; }
         public int QTY { get; set; }
         public int ROL { get; set; }
+
+        [Display(Name = "Requested QTY")]
         public int Request { get; set; }
+
+        [Display(Name="Last Requested Date")]
         public string ReqDate { get; set; }   
 
     }

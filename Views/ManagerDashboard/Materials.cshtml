@@ -1,0 +1,94 @@
+﻿@using MySqlX.XDevAPI
+@model IEnumerable<SRIMAK.Models.RawMaterialModel>
+
+@{
+    ViewData["Title"] = "Materials";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Raw Materials</h4>
+                    <div class=offset-9><a class="btn btn-primary" href="@Url.Action("CreateNewMaterial","ManagerDashboard")" role="button">Create New</a></div>
+                </div>
+                
+
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "rm_id" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Id)</a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "name" , typePram = @ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.Name) </a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "rm_size" , typePram = @ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.Size) </a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "qty" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.QTY) </a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "rol" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.ROL) </a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "request" , typePram = @ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.Request) </a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "req_date" , typePram = @ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.ReqDate) </a>
+</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ var clr = "";}
+                        @foreach (var item in Model)
+                        {
+                            @if (item.QTY < item.ROL)
+                            {
+                                clr = "red";
+                            }
+                            else
+                            {
+                                clr = "";
+                            }
+                            <tr style="color: @clr">
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Id)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Name)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Size)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.QTY)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ROL)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Request)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ReqDate)
+                                </td>
+                                <td>
+                                    @Html.ActionLink("Edit", "EditMaterial", new {  id=item.Id}) |
+                                    
+                                    @Html.ActionLink("Delete", "DeleteMaterialResult", new { id=item.Id } , new { onclick = "return confirm('Are sure wants to delete?');" })
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
