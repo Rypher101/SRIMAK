@@ -1,0 +1,76 @@
+﻿@model IEnumerable<SRIMAK.Models.FinishedProductModel>
+
+@{
+    ViewData["Title"] = "Finished Products";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Finished Products</h4>
+                    <div class="offset-9"><a class="btn btn-primary btn-sm" href="@Url.Action("CreateNewProduct","ManagerDashboard")" role="button"><b>Create New</b></a></div>
+                </div>
+
+
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a href="@Url.Action("FinishedProducts", "ManagerDashboard", new {sortPram = "pro_id", typePram = ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.pro_id) </a>
+                            </th>
+                            <th>
+                                <a href="@Url.Action("FinishedProducts", "ManagerDashboard", new {sortPram = "finished_product.name", typePram = ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Name) </a>
+                            </th>
+                            <th>
+                                <a href="@Url.Action("FinishedProducts", "ManagerDashboard", new {sortPram = "finished_product.qty", typePram = ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.QTY) </a>
+                            </th>
+                            <th>
+                                <a href="@Url.Action("FinishedProducts", "ManagerDashboard", new {sortPram = "finished_product.price", typePram = ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.Price) </a>
+                            </th>
+                            <th>
+                                <a href="@Url.Action("FinishedProducts", "ManagerDashboard", new {sortPram = "finished_product.rm_id", typePram = ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.rm_id) </a>
+                            </th>
+                            <th>
+                                <a href="@Url.Action("FinishedProducts", "ManagerDashboard", new {sortPram = "raw_materials.name", typePram = ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.rm_name) </a>
+                            </th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.pro_id)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Name)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.QTY)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Price)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.rm_id)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.rm_name)
+                            </td>
+                            <td><a class="btn btn-success btn-sm" href="@Url.Action("EditProduct","ManagerDashboard", new {id = item.pro_id})" role="button"><b>Edit</b></a></td>
+                            <td><a class="btn btn-danger btn-sm" href="@Url.Action("DeleteProductResult","ManagerDashboard", new {id = item.pro_id})" role="button" onclick="return confirm('Are sure wants to delete?');"><b>Delete</b></a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

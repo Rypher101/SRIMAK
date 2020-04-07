@@ -1,0 +1,68 @@
+﻿@model SRIMAK.Models.FinishedProductModel
+
+@{
+    ViewData["Title"] = "ViewNewProduct";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+<div class="col-md-12">
+    <div class="card ">
+        <div class="card-header ">
+            <div class="row">
+                <h4 class="card-title" style="margin-left: 20px;">New Product</h4>
+                <div class=offset-8><a class="btn btn-primary" href="@Url.Action("CreateNewProduct", "ManagerDashboard")" role="button">Create New</a></div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div>
+                <hr />
+                <div class="col-md-10 offset-4">
+                    <dl class="row">
+
+                        <dt class="col-sm-2">
+                            @Html.DisplayNameFor(model => model.pro_id)
+                        </dt>
+                        <dd class="col-sm-10">
+                            @Html.DisplayFor(model => model.pro_id)
+                        </dd>
+                        <dt class="col-sm-2">
+                            @Html.DisplayNameFor(model => model.Name)
+                        </dt>
+                        <dd class="col-sm-10">
+                            @Html.DisplayFor(model => model.Name)
+                        </dd>
+                        <dt class="col-sm-2">
+                            @Html.DisplayNameFor(model => model.QTY)
+                        </dt>
+                        <dd class="col-sm-10">
+                            @Html.DisplayFor(model => model.QTY)
+                        </dd>
+                        <dt class="col-sm-2">
+                            @Html.DisplayNameFor(model => model.Price)
+                        </dt>
+                        <dd class="col-sm-10">
+                            @Html.DisplayFor(model => model.Price)
+                        </dd>
+                        <dt class="col-sm-2">
+                            @Html.DisplayNameFor(model => model.rm_id)
+                        </dt>
+                        <dd class="col-sm-10">
+                            @Html.DisplayFor(model => model.rm_id)
+                        </dd>
+                        <dt class="col-sm-2">
+                            @Html.DisplayNameFor(model => model.rm_name)
+                        </dt>
+                        <dd class="col-sm-10">
+                            @Html.DisplayFor(model => model.rm_name)
+                        </dd>
+                    </dl>
+                </div>
+                <div>
+                    <a class="btn btn-success btn-sm" href="@Url.Action("EditProduct","ManagerDashboard", new {id = Model.pro_id})" role="button"><b>Edit</b></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

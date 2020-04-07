@@ -13,10 +13,10 @@
                     <h4 class="card-title" style="margin-left: 20px;">New Raw Material</h4>
                     <div class=offset-8><a class="btn btn-primary" href="@Url.Action("CreateNewMaterial", "ManagerDashboard")" role="button">Create New</a></div>
                 </div>
-                </div>
+            </div>
             <div class="card-body">
                 <div>
-                    <hr /> 
+                    <hr />
                     <div class="col-md-10 offset-4">
                         <dl class="row">
 
@@ -55,8 +55,8 @@
                     </div>
                 </div>
                 <div>
-                    @Html.ActionLink("Edit", "EditMaterial", new { id = Model.Id }) 
-                   
+                    <a class="btn btn-success btn-sm" href="@Url.Action("EditMaterial","ManagerDashboard", new {id = Model.Id})" role="button"><b>Edit</b></a>
+
                 </div>
             </div>
         </div>

@@ -1,7 +1,7 @@
-﻿@model SRIMAK.Models.RawMaterialModel
+﻿@model SRIMAK.Models.FinishedProductModel
 
 @{
-    ViewData["Title"] = "CreateNewMaterial";
+    ViewData["Title"] = "CreateNewProduct";
     Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
 }
 
@@ -9,16 +9,16 @@
     <div class="col-md-12">
         <div class="card ">
             <div class="card-header ">
-                <h4 class="card-title">Create New Raw Materials</h4>
+                <h4 class="card-title">New Product</h4>
             </div>
             <div class="card-body">
                 <hr />
                 <div class="row">
                     <div class="col-md-4 offset-4">
-                        <form asp-action="CreateNewMaterialResult">
+                        <form asp-action="CreateNewProductResult">
                             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                             <div class="form-group">
-                                <label>Material ID will assign by the system </label>
+                                <label class="control-label">Product ID will assign by the system</label>
                             </div>
                             <div class="form-group">
                                 <label asp-for="Name" class="control-label"></label>
@@ -26,25 +26,33 @@
                                 <span asp-validation-for="Name" class="text-danger"></span>
                             </div>
                             <div class="form-group">
-                                <label asp-for="Size" class="control-label"></label>
-                                <input asp-for="Size" class="form-control" required=""/>
-                                <span asp-validation-for="Size" class="text-danger"></span>
-                            </div>
-                            <div class="form-group">
                                 <label asp-for="QTY" class="control-label"></label>
                                 <input asp-for="QTY" class="form-control" required=""/>
                                 <span asp-validation-for="QTY" class="text-danger"></span>
                             </div>
                             <div class="form-group">
-                                <label asp-for="ROL" class="control-label"></label>
-                                <input asp-for="ROL" class="form-control" required=""/>
-                                <span asp-validation-for="ROL" class="text-danger"></span>
+                                <label asp-for="Price" class="control-label"></label>
+                                <input asp-for="Price" class="form-control" required=""/>
+                                <span asp-validation-for="Price" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="rm_id" class="control-label"></label>
+                                <select name="rm_id" id="rm_id" class="form-control">
+                                    @foreach (var item in ViewBag.Raw)
+                                    {
+                                        <option value="@item.Id">@item.Id - @item.Name</option>
+                                    }
+                                </select>
                             </div>
                             <div class="form-group">
                                 <input type="submit" value="Create" class="btn btn-primary" />
                             </div>
                         </form>
                     </div>
+                </div>
+
+                <div>
+                    <a asp-action="Index">Back to List</a>
                 </div>
 
             </div>

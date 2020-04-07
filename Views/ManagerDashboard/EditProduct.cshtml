@@ -1,0 +1,64 @@
+﻿@model SRIMAK.Models.FinishedProductModel
+
+@{
+    ViewData["Title"] = "EditProduct";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Edit Product</h4>
+            </div>
+            <div class="card-body">
+                <hr />
+                <div class="row">
+                    <div class="col-md-4 offset-4">
+                        <form asp-action="EditProductResult">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <label asp-for="pro_id" class="control-label"></label>
+                                <input asp-for="pro_id" class="form-control" readonly=""/>
+                                <span asp-validation-for="pro_id" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Name" class="control-label"></label>
+                                <input asp-for="Name" class="form-control" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="QTY" class="control-label"></label>
+                                <input asp-for="QTY" class="form-control" />
+                                <span asp-validation-for="QTY" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Price" class="control-label"></label>
+                                <input asp-for="Price" class="form-control" />
+                                <span asp-validation-for="Price" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="rm_id" class="control-label"></label>
+                                <select name="rm_id" id="rm_id" class="form-control">
+                                    <option value="@Model.rm_id">@Model.rm_id - @Model.rm_name</option>
+
+                                    @foreach (var item in ViewBag.Raw)
+                                    {
+                                        if (item.Id != Model.rm_id)
+                                        {
+                                            <option value="@item.Id">@item.Id - @item.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" value="Save" class="btn btn-primary" />
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

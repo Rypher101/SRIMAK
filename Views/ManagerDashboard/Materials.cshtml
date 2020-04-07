@@ -1,4 +1,5 @@
-﻿@using MySqlX.XDevAPI
+﻿@using System.Linq.Expressions
+@using MySqlX.XDevAPI
 @model IEnumerable<SRIMAK.Models.RawMaterialModel>
 
 @{
@@ -12,7 +13,7 @@
             <div class="card-header ">
                 <div class="row">
                     <h4 class="card-title" style="margin-left: 20px;">Raw Materials</h4>
-                    <div class=offset-9><a class="btn btn-primary" href="@Url.Action("CreateNewMaterial","ManagerDashboard")" role="button">Create New</a></div>
+                    <div class="col-md-1 offset-9"><a class="btn btn-primary btn-sm" href="@Url.Action("CreateNewMaterial","ManagerDashboard")" role="button"><b>Create New</b></a></div>
                 </div>
                 
 
@@ -46,45 +47,33 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @{ var clr = "";}
-                        @foreach (var item in Model)
-                        {
-                            @if (item.QTY < item.ROL)
-                            {
-                                clr = "red";
-                            }
-                            else
-                            {
-                                clr = "";
-                            }
-                            <tr style="color: @clr">
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.Id)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.Name)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.Size)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.QTY)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.ROL)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.Request)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => item.ReqDate)
-                                </td>
-                                <td>
-                                    @Html.ActionLink("Edit", "EditMaterial", new {  id=item.Id}) |
-                                    
-                                    @Html.ActionLink("Delete", "DeleteMaterialResult", new { id=item.Id } , new { onclick = "return confirm('Are sure wants to delete?');" })
-                                </td>
-                            </tr>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Id)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Name)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Size)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.QTY)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ROL)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Request)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ReqDate)
+                            </td>
+                            <td><a class="btn btn-success btn-sm" href="@Url.Action("EditMaterial","ManagerDashboard", new {id = item.Id})" role="button"><b>Edit</b></a></td>
+                            <td><a class="btn btn-danger btn-sm" href="@Url.Action("DeleteMaterialResult","ManagerDashboard", new {id = item.Id})" role="button" onclick="return confirm('Are sure wants to delete?');"><b>Delete</b></a></td>
+                        </tr>
                         }
                     </tbody>
                 </table>
