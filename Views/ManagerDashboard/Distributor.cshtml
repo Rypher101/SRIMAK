@@ -1,0 +1,94 @@
+﻿@model IEnumerable<SRIMAK.Models.DistributorModel>
+
+@{
+    ViewData["Title"] = "Distributor";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+<div class="col-md-12">
+<div class="card ">
+<div class="card-header ">
+    <div class="row">
+        <h4 class="card-title" style="margin-left: 20px;">Distributors</h4>
+        <div class="col-md-1 offset-9"><a class="btn btn-primary btn-sm" href="@Url.Action("CreateNewDistributor","ManagerDashboard")" role="button"><b>Create New</b></a></div>
+    </div>
+
+
+</div>
+<div class="card-body table-full-width table-responsive">
+    <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+        <thead>
+        <tr>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "dis_id" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.dis_id)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "name" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Name)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "email" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Email)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "nic" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.NIC)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "contact" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Contact)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "vehi_no" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.vehi_no)</a>
+            </th>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "vehi_type" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.vehi_type)</a>
+            </th>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "distributor.rout_no" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Rout)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Distributor","ManagerDashboard" , new {sortPram = "town" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Town)</a>
+            </th>
+            <th></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.dis_id)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Email)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NIC)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Contact)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.vehi_no)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.vehi_type)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Rout)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Town)
+                </td>
+                <td><a class="btn btn-success btn-sm" href="@Url.Action("EditDistributor","ManagerDashboard", new {id = item.dis_id})" role="button"><b>Edit</b></a></td>
+                <td><a class="btn btn-danger btn-sm" href="@Url.Action("DeleteDistributorResult","ManagerDashboard", new {id = item.dis_id})" role="button" onclick="return confirm('Are sure wants to delete?');"><b>Delete</b></a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+</div>
+</div>
+</div>

@@ -9,13 +9,9 @@ namespace SRIMAK.Models
 {
     public class LoginModel
     {
-        [Display(Name = "User Name")]
-        [Required]
-        public string UserName { get; set; }
+        [Display(Name = "User Name")] [Required] public string UserName { get; set; }
 
-        [Required]
-        [ProtectedPersonalData]
-        public string Password { get; set; }
+        [Required] [ProtectedPersonalData] public string Password { get; set; }
     }
 
 }

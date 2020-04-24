@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Dynamic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
-using Org.BouncyCastle.Bcpg.OpenPgp;
 using SRIMAK.Models;
 
 namespace SRIMAK.Controllers
@@ -37,19 +35,18 @@ namespace SRIMAK.Controllers
         }
 
         // DASHBOARD
-        private async Task<List<RawMaterialModel>> GetRawMaterials(int x = 0, string pram1 = "rm_id",
-            string pram2 = null)
+        private async Task<List<RawMaterialModel>> GetRawMaterials(int x = 0, string pram1 = "rm_id", string pram2 = null)
         {
             try
             {
                 var output = new List<RawMaterialModel>();
                 var cmd = DBConn.Connection.CreateCommand();
                 if (x == 1)
-                    cmd.CommandText = "SELECT * FROM raw_materials";
+                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1";
                 else if (x == 2)
-                    cmd.CommandText = "SELECT * FROM raw_materials ORDER BY " + pram1 + " " + pram2;
+                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1 ORDER BY " + pram1 + " " + pram2;
                 else
-                    cmd.CommandText = "SELECT * FROM raw_materials WHERE qty<=rol OR request>0";
+                    cmd.CommandText = "SELECT * FROM raw_materials WHERE (qty<=rol OR request>0) AND status = 1";
 
                 await using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -100,7 +97,7 @@ namespace SRIMAK.Controllers
             if (typePram == null || typePram == "ASC")
                 ViewData["sortType"] = "DESC";
             else if (typePram == "DESC") ViewData["sortType"] = "ASC";
-           
+
             SetActiveNavbar(3);
 
             if (sortPram == null)
@@ -200,7 +197,7 @@ namespace SRIMAK.Controllers
             try
             {
                 var cmd = DBConn.Connection.CreateCommand();
-                cmd.CommandText = "DELETE FROM raw_materials WHERE rm_id = @rmid";
+                cmd.CommandText = "UPDATE raw_materials SET status = 0 WHERE rm_id = @rmid";
                 cmd.Parameters.AddWithValue("@rmid", id);
 
                 var recs = cmd.ExecuteNonQuery();
@@ -275,7 +272,8 @@ namespace SRIMAK.Controllers
         public async Task<ActionResult> ViewNewMaterial()
         {
             var cmd = DBConn.Connection.CreateCommand();
-            cmd.CommandText = "SELECT MAX(rm_id),name,rm_size,qty,rol FROM raw_materials WHERE rm_id = (SELECT MAX(rm_id) FROM raw_materials)";
+            cmd.CommandText =
+                "SELECT MAX(rm_id),name,rm_size,qty,rol FROM raw_materials WHERE rm_id = (SELECT MAX(rm_id) FROM raw_materials)";
 
             await using (var reader = await cmd.ExecuteReaderAsync())
             {
@@ -301,39 +299,34 @@ namespace SRIMAK.Controllers
         }
 
         //FINISHED PRODUCT
-        public async Task<ActionResult> FinishedProducts(string sortPram = null , string typePram = null)
+        public async Task<ActionResult> FinishedProducts(string sortPram = null, string typePram = null)
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var output = new List<FinishedProductModel>();
             var cmd = DBConn.Connection.CreateCommand();
 
             if (sortPram == null)
-            {
-                cmd.CommandText = "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id";
-            }
+                cmd.CommandText =
+                    "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id WHERE finished_product.status = 1";
             else
-            {
-                cmd.CommandText = "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id ORDER BY " + sortPram + " " + typePram;
-            }
+                cmd.CommandText =
+                    "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id WHERE finished_product.status = 1 ORDER BY " +
+                    sortPram + " " + typePram;
 
             if (typePram == null || typePram == "DESC")
-            {
                 ViewData["sortType"] = "ASC";
-            }
             else
-            {
                 ViewData["sortType"] = "DESC";
-            }
 
             await using (var reader = await cmd.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
                 {
-                    var temp = new FinishedProductModel()
+                    var temp = new FinishedProductModel
                     {
                         pro_id = reader.GetFieldValue<int>(0),
                         Name = reader.GetFieldValue<string>(1),
@@ -355,12 +348,12 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var raw = await GetRawMaterials(1);
             var temp = new FinishedProductModel();
-            ;
+
             var cmd = DBConn.Connection.CreateCommand();
             cmd.CommandText =
                 "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id WHERE pro_id = @proid";
@@ -390,7 +383,8 @@ namespace SRIMAK.Controllers
             try
             {
                 var cmd = DBConn.Connection.CreateCommand();
-                cmd.CommandText = "UPDATE finished_product SET name=@name, qty=@qty, price=@price, rm_id=@rmid WHERE pro_id = @proid";
+                cmd.CommandText =
+                    "UPDATE finished_product SET name=@name, qty=@qty, price=@price, rm_id=@rmid WHERE pro_id = @proid";
                 cmd.Parameters.AddWithValue("@name", collection["Name"]);
                 cmd.Parameters.AddWithValue("@qty", collection["QTY"]);
                 cmd.Parameters.AddWithValue("@price", collection["Price"]);
@@ -415,7 +409,7 @@ namespace SRIMAK.Controllers
                 Console.WriteLine(e);
                 throw;
             }
-            
+
 
             return RedirectToAction(nameof(FinishedProducts));
         }
@@ -424,13 +418,13 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             try
             {
                 var cmd = DBConn.Connection.CreateCommand();
-                cmd.CommandText = "DELETE FROM finished_product WHERE pro_id = @proid";
+                cmd.CommandText = "UPDATE finished_product SET status = 0 WHERE pro_id = @proid";
                 cmd.Parameters.AddWithValue("@proid", id);
 
                 var recs = cmd.ExecuteNonQuery();
@@ -458,7 +452,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var raw = await GetRawMaterials();
@@ -493,11 +487,9 @@ namespace SRIMAK.Controllers
                     TempData["MsgType"] = "2";
                     return RedirectToAction(nameof(ViewNewProduct));
                 }
-                else
-                {
-                    TempData["Message"] = "Error Occured while creating the new product. Please try again!";
-                    TempData["MsgType"] = "4";
-                }
+
+                TempData["Message"] = "Error Occured while creating the new product. Please try again!";
+                TempData["MsgType"] = "4";
             }
             catch (Exception e)
             {
@@ -513,12 +505,14 @@ namespace SRIMAK.Controllers
         public async Task<ActionResult> ViewNewProduct()
         {
             var cmd = DBConn.Connection.CreateCommand();
-            cmd.CommandText = "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id WHERE pro_id = (SELECT MAX(pro_id) FROM finished_product)";
+            cmd.CommandText =
+                "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id WHERE pro_id = (SELECT MAX(pro_id) FROM finished_product)";
 
-            await using(var reader = await cmd.ExecuteReaderAsync())
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
                 while (await reader.ReadAsync())
                 {
-                    var temp = new FinishedProductModel()
+                    var temp = new FinishedProductModel
                     {
                         pro_id = reader.GetFieldValue<int>(0),
                         Name = reader.GetFieldValue<string>(1),
@@ -532,85 +526,704 @@ namespace SRIMAK.Controllers
                     TempData["MsgType"] = "2";
                     return View(temp);
                 }
+            }
 
             TempData["Message"] = "Unable to view new product!";
             TempData["MsgType"] = "4";
             return RedirectToAction(nameof(FinishedProducts));
+        }
 
-        } 
+
+        //Reseller
+        public async Task<ActionResult> Resellers(string sortPram = null, string typePram = null)
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new {id = 1});
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            var output = new List<ResellerModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+
+            if (sortPram == null)
+                cmd.CommandText =
+                    "SELECT user.user_id,name,doa,contact_number,address,email,rout,town FROM user INNER JOIN rout ON user.rout = rout.rout_no WHERE type = 3";
+            else
+                cmd.CommandText =
+                    "SELECT user.user_id,name,doa,contact_number,address,email,rout,town FROM user INNER JOIN rout ON user.rout = rout.rout_no WHERE type = 3 ORDER BY " +
+                    sortPram + " " + typePram;
+
+            if (typePram == null || typePram == "DESC")
+                ViewData["sortType"] = "ASC";
+            else
+                ViewData["sortType"] = "DESC";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new ResellerModel
+                    {
+                        userID = reader.GetFieldValue<string>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        doa = reader.GetFieldValue<DateTime>(2).ToString("D"),
+                        contact = reader.GetFieldValue<string>(3),
+                        Address = reader.GetFieldValue<string>(4),
+                        Email = reader.GetFieldValue<string>(5),
+                        Rout = reader.GetFieldValue<int>(6),
+                        Town = reader.GetFieldValue<string>(7)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            SetActiveNavbar(5);
+            return View(output);
+        }
+
+        public async Task<ActionResult> CreateNewReseller()
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new {id = 1});
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            var rout = await GetRouts();
+            if (rout.Count == 0)
+            {
+                TempData["Message"] =
+                    "There are no routs found. Please add routs before adding resellers.";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(Resellers));
+            }
+
+            ViewBag.Raw = rout;
+            return View();
+        }
+
+        public async Task<List<RoutModel>> GetRouts()
+        {
+            var output = new List<RoutModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT rout_no,town, rout.user_id,name FROM rout INNER JOIN user ON rout.user_id = user.user_id";
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var temp = new RoutModel
+                {
+                    RoutId = reader.GetFieldValue<int>(0),
+                    Town = reader.GetFieldValue<string>(1),
+                    User = reader.GetFieldValue<string>(2),
+                    Name = reader.GetFieldValue<string>(3)
+                };
+
+                output.Add(temp);
+            }
+
+            return output;
+        }
+
+        public ActionResult CreateNewResellerResult(IFormCollection collection)
+        {
+            try
+            {
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText =
+                    "INSERT INTO user(user_id,password,name,doa,contact_number,address,type,email,rout) VALUES (@userid,'admin',@name,@doa,@contact,@address,3,@email,@rout)";
+                cmd.Parameters.AddWithValue("@userid", collection["userID"]);
+                cmd.Parameters.AddWithValue("@name", collection["Name"]);
+                cmd.Parameters.AddWithValue("@doa", collection["doa"]);
+                cmd.Parameters.AddWithValue("@contact", collection["contact"]);
+                cmd.Parameters.AddWithValue("@address", collection["Address"]);
+                cmd.Parameters.AddWithValue("@email", collection["Email"]);
+                cmd.Parameters.AddWithValue("@rout", collection["rout_no"]);
+
+                var recs = cmd.ExecuteNonQuery();
+
+                if (recs > 0)
+                {
+                    TempData["Message"] = "New reseller registered!";
+                    TempData["MsgType"] = "2";
+                    return RedirectToAction("ViewNewReseller", new {user = collection["userID"]});
+                }
+
+                TempData["Message"] = "Error Occured while registering the new reseller. Please try again!";
+                TempData["MsgType"] = "4";
+            }
+            catch (Exception e)
+            {
+                TempData["Message"] = "Error Occured while registering the new reseller. Please try again!";
+                TempData["MsgType"] = "4";
+
+                Console.WriteLine(e);
+            }
+
+            return RedirectToAction(nameof(Resellers));
+        }
+
+        public async Task<ActionResult> ViewNewReseller(string user)
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT user.user_id,name,doa,contact_number,address,email,rout,town FROM user INNER JOIN rout ON user.rout = rout.rout_no WHERE user.user_id = '" +
+                user + "'";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new ResellerModel
+                    {
+                        userID = reader.GetFieldValue<string>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        doa = reader.GetFieldValue<DateTime>(2).ToString("D"),
+                        contact = reader.GetFieldValue<string>(3),
+                        Address = reader.GetFieldValue<string>(4),
+                        Email = reader.GetFieldValue<string>(5),
+                        Rout = reader.GetFieldValue<int>(6),
+                        Town = reader.GetFieldValue<string>(7)
+                    };
+
+                    TempData["Message"] = "New reseller registered!";
+                    TempData["MsgType"] = "2";
+                    return View(temp);
+                }
+            }
+
+            TempData["Message"] = "Unable to view new product!";
+            TempData["MsgType"] = "4";
+            return RedirectToAction(nameof(Resellers));
+        }
+
+        //SUPPLIER
+        public async Task<ActionResult> Supplier(string sortPram = null, string typePram = null)
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new {id = 1});
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            var output = new List<SupplierModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+
+            if (sortPram == null)
+                cmd.CommandText =
+                    "SELECT sup_id,supplier.name,supplier.contact,supplier.email,supplier.user_id,user.name FROM supplier INNER JOIN user ON supplier.user_id = user.user_id WHERE supplier.status = 1";
+            else
+                cmd.CommandText =
+                    "SELECT sup_id,supplier.name,supplier.contact,supplier.email,supplier.user_id,user.name FROM supplier INNER JOIN user ON supplier.user_id = user.user_id WHERE supplier.status = 1 ORDER BY " +
+                    sortPram + " " + typePram;
+
+            if (typePram == null || typePram == "DESC")
+                ViewData["sortType"] = "ASC";
+            else
+                ViewData["sortType"] = "DESC";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new SupplierModel
+                    {
+                        suppId = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        Contact = reader.GetFieldValue<string>(2),
+                        Email = reader.GetFieldValue<string>(3),
+                        userId = reader.GetFieldValue<string>(4),
+                        uName = reader.GetFieldValue<string>(5)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            SetActiveNavbar(6);
+            return View(output);
+        }
+
+        public async Task<ActionResult> EditSupplier(int id)
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new {id = 1});
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            var raw = await GetRawMaterials(1);
+            var temp = new SupplierModel();
+            ;
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT * FROM supplier WHERE sup_id = @supid";
+            cmd.Parameters.AddWithValue("@supid", id);
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    temp.suppId = reader.GetFieldValue<int>(0);
+                    temp.Name = reader.GetFieldValue<string>(1);
+                    temp.Contact = reader.GetFieldValue<string>(2);
+                    temp.Email = reader.GetFieldValue<string>(3);
+                }
+            }
+
+            return View(temp);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EditSupplierResult(IFormCollection collection)
+        {
+            if (HttpContext.Session.GetString("UID") == null)
+            {
+                TempData["Message"] = "Invalid session data. Please login and try again!";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(Supplier));
+            }
+
+            try
+            {
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText =
+                    "UPDATE supplier SET name=@name, contact=@contact, email=@email, user_id=@uid WHERE sup_id = @supid";
+                cmd.Parameters.AddWithValue("@name", collection["Name"]);
+                cmd.Parameters.AddWithValue("@contact", collection["Contact"]);
+                cmd.Parameters.AddWithValue("@email", collection["Email"]);
+                cmd.Parameters.AddWithValue("@uid", HttpContext.Session.GetString("UID"));
+                cmd.Parameters.AddWithValue("@supid", collection["suppId"]);
+
+                var recs = cmd.ExecuteNonQuery();
+
+                if (recs > 0)
+                {
+                    TempData["Message"] = "Supplier update successful! : Supplier ID = " + collection["suppId"];
+                    TempData["MsgType"] = "2";
+                }
+                else
+                {
+                    TempData["Message"] = "Supplier update faild!";
+                    TempData["MsgType"] = "4";
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
+
+            return RedirectToAction(nameof(Supplier));
+        }
+
+        public ActionResult DeleteSupplierResult(int id)
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new {id = 1});
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            try
+            {
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText = "UPDATE supplier SET status = 0, user_id = @user WHERE sup_id = @supid";
+                cmd.Parameters.AddWithValue("@user", HttpContext.Session.GetString("UID"));
+                cmd.Parameters.AddWithValue("@supid", id);
+
+                var recs = cmd.ExecuteNonQuery();
+
+                if (recs > 0)
+                {
+                    TempData["Message"] = "Delete Successfull : Supplier ID = " + id;
+                    TempData["MsgType"] = "2";
+                }
+                else
+                {
+                    TempData["Message"] = "Delete Faild : Supplier ID = " + id;
+                    TempData["MsgType"] = "4";
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+            return RedirectToAction(nameof(Supplier));
+        }
+
+        public ActionResult CreateNewSupplier()
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new {id = 1});
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            if (HttpContext.Session.GetString("UID") == null)
+            {
+                TempData["Message"] = "Invalid session data. Please login and try again!";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(Supplier));
+            }
+
+            return View();
+        }
+
+        public ActionResult CreateNewSupplierResult(IFormCollection collection)
+        {
+            try
+            {
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText =
+                    "INSERT INTO supplier(name,contact,email,user_id) VALUES (@name,@contact,@email,@user)";
+                cmd.Parameters.AddWithValue("@name", collection["Name"]);
+                cmd.Parameters.AddWithValue("@contact", collection["Contact"]);
+                cmd.Parameters.AddWithValue("@email", collection["Email"]);
+                cmd.Parameters.AddWithValue("@user", HttpContext.Session.GetString("UID"));
+
+                var recs = cmd.ExecuteNonQuery();
+
+                if (recs > 0)
+                {
+                    TempData["Message"] = "New Supplier registered!";
+                    TempData["MsgType"] = "2";
+                    return RedirectToAction(nameof(ViewNewSupplier));
+                }
+
+                TempData["Message"] = "Error Occured while registering the new supplier. Please try again!";
+                TempData["MsgType"] = "4";
+            }
+            catch (Exception e)
+            {
+                TempData["Message"] = "Error Occured while registering the new supplier. Please try again!";
+                TempData["MsgType"] = "4";
+
+                Console.WriteLine(e);
+            }
+
+            return RedirectToAction(nameof(FinishedProducts));
+        }
+
+        public async Task<ActionResult> ViewNewSupplier()
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT sup_id,supplier.name,supplier.contact,supplier.email,supplier.user_id,user.name FROM supplier INNER JOIN user ON supplier.user_id = user.user_id WHERE supplier.status = 1 AND sup_id = (SELECT MAX(sup_id) FROM supplier)";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new SupplierModel
+                    {
+                        suppId = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        Contact = reader.GetFieldValue<string>(2),
+                        Email = reader.GetFieldValue<string>(3),
+                        userId = reader.GetFieldValue<string>(4),
+                        uName = reader.GetFieldValue<string>(5)
+                    };
+
+                    TempData["Message"] = "New supplier created!";
+                    TempData["MsgType"] = "2";
+                    return View(temp);
+                }
+            }
+
+            TempData["Message"] = "Unable to view new supplier!";
+            TempData["MsgType"] = "4";
+            return RedirectToAction(nameof(Supplier));
+        }
+
+        //DISTRIBUTOR
+        public async Task<ActionResult> Distributor(string sortPram = null, string typePram = null)
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new { id = 1 });
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            var output = new List<DistributorModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+
+            if (sortPram == null)
+                cmd.CommandText =
+                    "SELECT dis_id, name, email, nic, contact, vehi_no, vehi_type, distributor.rout_no, rout.town FROM distributor INNER JOIN rout ON distributor.rout_no = rout.rout_no WHERE status = 1";
+            else
+                cmd.CommandText =
+                    "SELECT dis_id, name, email, nic, contact, vehi_no, vehi_type, distributor.rout_no, rout.town FROM distributor INNER JOIN rout ON distributor.rout_no = rout.rout_no WHERE status = 1 ORDER BY " +
+                    sortPram + " " + typePram;
+
+            if (typePram == null || typePram == "DESC")
+                ViewData["sortType"] = "ASC";
+            else
+                ViewData["sortType"] = "DESC";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new DistributorModel
+                    {
+                        dis_id = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        Email = reader.GetFieldValue<string>(2),
+                        NIC = reader.GetFieldValue<string>(3),
+                        Contact = reader.GetFieldValue<string>(4),
+                        vehi_no = reader.GetFieldValue<string>(5),
+                        vehi_type = reader.GetFieldValue<string>(6),
+                        Rout = reader.GetFieldValue<int>(7),
+                        Town = reader.GetFieldValue<string>(8)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            SetActiveNavbar(2);
+            return View(output);
+        }
+
+        public async Task<ActionResult> EditDistributor(int id)
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new { id = 1 });
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            var rout = await GetRouts();
+            if (rout.Count == 0)
+            {
+                TempData["Message"] =
+                    "There are no routs found. Please add routs before adding distributors.";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(Distributor));
+            }
+
+            var temp = new DistributorModel();
+            
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT dis_id, name, email, nic, contact, vehi_no, vehi_type, distributor.rout_no, rout.town FROM distributor INNER JOIN rout ON distributor.rout_no = rout.rout_no WHERE status = 1 AND dis_id = @disid";
+            cmd.Parameters.AddWithValue("@disid", id);
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    temp.dis_id = reader.GetFieldValue<int>(0);
+                    temp.Name = reader.GetFieldValue<string>(1);
+                    temp.Email = reader.GetFieldValue<string>(2);
+                    temp.NIC = reader.GetFieldValue<string>(3);
+                    temp.Contact = reader.GetFieldValue<string>(4);
+                    temp.vehi_no = reader.GetFieldValue<string>(5);
+                    temp.vehi_type = reader.GetFieldValue<string>(6);
+                    temp.Rout = reader.GetFieldValue<int>(7);
+                    temp.Town = reader.GetFieldValue<string>(8);
+                }
+            }
+
+            ViewBag.Routs = rout;
+            return View(temp);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EditDistributorResult(IFormCollection collection)
+        {
+            try
+            {
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText =
+                    "UPDATE distributor SET name=@name , email=@email, nic=@nic, contact=@contact, vehi_no=@no, vehi_type=@type, rout_no=@rout WHERE dis_id = @disid";
+                cmd.Parameters.AddWithValue("@name", collection["Name"]);
+                cmd.Parameters.AddWithValue("@email", collection["Email"]);
+                cmd.Parameters.AddWithValue("@nic", collection["NIC"]);
+                cmd.Parameters.AddWithValue("@contact", collection["Contact"]);
+                cmd.Parameters.AddWithValue("@no", collection["vehi_no"]);
+                cmd.Parameters.AddWithValue("@type", collection["vehi_type"]);
+                cmd.Parameters.AddWithValue("@rout", collection["Rout"]);
+                cmd.Parameters.AddWithValue("@disid", collection["dis_id"]);
+
+                var recs = cmd.ExecuteNonQuery();
+
+                if (recs > 0)
+                {
+                    TempData["Message"] = "Distributor update successful! : Distributor ID = " + collection["dis_id"];
+                    TempData["MsgType"] = "2";
+                }
+                else
+                {
+                    TempData["Message"] = "Distributor update faild!";
+                    TempData["MsgType"] = "4";
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
+
+            return RedirectToAction(nameof(Distributor));
+        }
+
+        public ActionResult DeleteDistributorResult(int id)
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new { id = 1 });
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            try
+            {
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText = "UPDATE distributor SET status = 0 WHERE dis_id = @disid";
+                cmd.Parameters.AddWithValue("@disid", id);
+
+                var recs = cmd.ExecuteNonQuery();
+
+                if (recs > 0)
+                {
+                    TempData["Message"] = "Delete Successfull : Distributor ID = " + id;
+                    TempData["MsgType"] = "2";
+                }
+                else
+                {
+                    TempData["Message"] = "Delete Faild : Distributor ID = " + id;
+                    TempData["MsgType"] = "4";
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+            return RedirectToAction(nameof(Distributor));
+        }
+
+        public async Task<ActionResult> CreateNewDistributor()
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new { id = 1 });
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            var rout = await GetRouts();
+            if (rout.Count == 0)
+            {
+                TempData["Message"] =
+                    "There are no routs found. Please add routs before adding distributors.";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(Distributor));
+            }
+            ViewBag.Routs = rout;
+
+            return View();
+        }
+
+        public ActionResult CreateNewDistributorResult(IFormCollection collection)
+        {
+            try
+            {
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText =
+                    "INSERT INTO distributor(name,email,nic,contact,vehi_no,vehi_type,rout_no) VALUES (@name,@email,@nic,@contact,@no,@type,@rout)";
+                cmd.Parameters.AddWithValue("@name", collection["Name"]);
+                cmd.Parameters.AddWithValue("@email", collection["Email"]);
+                cmd.Parameters.AddWithValue("@nic", collection["NIC"]);
+                cmd.Parameters.AddWithValue("@contact", collection["Contact"]);
+                cmd.Parameters.AddWithValue("@no", collection["vehi_no"]);
+                cmd.Parameters.AddWithValue("@type", collection["vehi_type"]);
+                cmd.Parameters.AddWithValue("@rout", collection["Rout"]);
+
+                var recs = cmd.ExecuteNonQuery();
+
+                if (recs > 0)
+                {
+                    TempData["Message"] = "New Distributor registered!";
+                    TempData["MsgType"] = "2";
+                    return RedirectToAction(nameof(ViewNewDistributor));
+                }
+
+                TempData["Message"] = "Error Occured while registering the new distributor. Please try again!";
+                TempData["MsgType"] = "4";
+            }
+            catch (Exception e)
+            {
+                TempData["Message"] = "Error Occured while registering the new distributor. Please try again!";
+                TempData["MsgType"] = "4";
+
+                Console.WriteLine(e);
+            }
+
+            return RedirectToAction(nameof(Distributor));
+        }
+
+        public async Task<ActionResult> ViewNewDistributor()
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT dis_id, name, email, nic, contact, vehi_no, vehi_type, distributor.rout_no, rout.town FROM distributor INNER JOIN rout ON distributor.rout_no = rout.rout_no WHERE status = 1 AND dis_id = (SELECT MAX(dis_id) FROM distributor)";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new DistributorModel
+                    {
+                        dis_id = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        Email = reader.GetFieldValue<string>(2),
+                        NIC = reader.GetFieldValue<string>(3),
+                        Contact = reader.GetFieldValue<string>(4),
+                        vehi_no = reader.GetFieldValue<string>(5),
+                        vehi_type = reader.GetFieldValue<string>(6),
+                        Rout = reader.GetFieldValue<int>(7),
+                        Town = reader.GetFieldValue<string>(8)
+                    };
+
+                    TempData["Message"] = "New distributor registered!";
+                    TempData["MsgType"] = "2";
+                    return View(temp);
+                }
+            }
+
+            TempData["Message"] = "Unable to view new distributor!";
+            TempData["MsgType"] = "4";
+            return RedirectToAction(nameof(Distributor));
+        }
 
         //MISC
-
         private void SetActiveNavbar(int x)
         {
             switch (x)
             {
                 case 1:
                     ViewData["Dashboard"] = "active";
-                    ViewData["Distributor"] = "";
-                    ViewData["Materials"] = "";
-                    ViewData["Products"] = "";
-                    ViewData["Resellers"] = "";
-                    ViewData["Suppliers"] = "";
-                    ViewData["Purchase"] = "";
                     break;
 
                 case 2:
-                    ViewData["Dashboard"] = "";
                     ViewData["Distributor"] = "active";
-                    ViewData["Materials"] = "";
-                    ViewData["Products"] = "";
-                    ViewData["Resellers"] = "";
-                    ViewData["Suppliers"] = "";
-                    ViewData["Purchase"] = "";
                     break;
 
                 case 3:
-                    ViewData["Dashboard"] = "";
-                    ViewData["Distributor"] = "";
                     ViewData["Materials"] = "active";
-                    ViewData["Products"] = "";
-                    ViewData["Resellers"] = "";
-                    ViewData["Suppliers"] = "";
-                    ViewData["Purchase"] = "";
                     break;
 
                 case 4:
-                    ViewData["Dashboard"] = "";
-                    ViewData["Distributor"] = "";
-                    ViewData["Materials"] = "";
                     ViewData["Products"] = "active";
-                    ViewData["Resellers"] = "";
-                    ViewData["Suppliers"] = "";
-                    ViewData["Purchase"] = "";
                     break;
 
                 case 5:
-                    ViewData["Dashboard"] = "";
-                    ViewData["Distributor"] = "";
-                    ViewData["Materials"] = "";
-                    ViewData["Products"] = "";
                     ViewData["Resellers"] = "active";
-                    ViewData["Suppliers"] = "";
-                    ViewData["Purchase"] = "";
                     break;
+
                 case 6:
-                    ViewData["Dashboard"] = "";
-                    ViewData["Distributor"] = "";
-                    ViewData["Materials"] = "";
-                    ViewData["Products"] = "";
-                    ViewData["Resellers"] = "";
                     ViewData["Suppliers"] = "active";
-                    ViewData["Purchase"] = "";
                     break;
 
                 case 7:
-                    ViewData["Dashboard"] = "";
-                    ViewData["Distributor"] = "";
-                    ViewData["Materials"] = "";
-                    ViewData["Products"] = "";
-                    ViewData["Resellers"] = "";
-                    ViewData["Suppliers"] = "";
                     ViewData["Purchase"] = "active";
                     break;
             }

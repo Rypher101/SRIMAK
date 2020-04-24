@@ -1,0 +1,84 @@
+﻿@model IEnumerable<SRIMAK.Models.ResellerModel>
+
+@{
+    ViewData["Title"] = "Resellers";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+<div class="col-md-12">
+<div class="card ">
+<div class="card-header ">
+    <div class="row">
+        <h4 class="card-title" style="margin-left: 20px;">Resellers</h4>
+        <div class="col-md-1 offset-9"><a class="btn btn-primary btn-sm" href="@Url.Action("CreateNewReseller","ManagerDashboard")" role="button"><b>Create New</b></a></div>
+    </div>
+
+
+</div>
+<div class="card-body table-full-width table-responsive">
+    <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+        <thead>
+        <tr>
+            <th>
+                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "user.user_id" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.userID)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "name" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Name)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "doa" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.doa)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "contact_number" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.contact)</a>
+</th>
+            <th>
+                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "address" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Address) </a>
+</th>
+            <th>
+                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "email" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Email) </a>
+</th>
+            <th>
+                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "rout" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Rout) </a>
+</th>
+            <th>
+                <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "town" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Town) </a>
+</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.userID)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.doa)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.contact)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Address)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Email)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Rout)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Town)
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+</div>
+</div>
+</div>

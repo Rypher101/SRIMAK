@@ -9,11 +9,11 @@ namespace SRIMAK.Models
 {
     public class RoutModel
     {
-        [Display(Name = "Rout ID")]
-        public int RoutId { get; set; }
+        [Display(Name = "Rout ID")] public int RoutId { get; set; }
         
         public string Town { get; set; }
         
         public string User { get; set; }
+        public string Name { get; set; }
     }
 }
