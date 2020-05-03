@@ -1,0 +1,59 @@
+﻿@model SRIMAK.Models.SupplierMaterialModel
+
+@{
+    ViewData["Title"] = "CreateNewSupplierMaterial";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card ">
+                <div class="card-header ">
+                    <h4 class="card-title">New Material</h4>
+                </div>
+                <div class="card-body">
+                    <hr />
+                    <div class="row">
+                        <div class="col-md-4 offset-4">
+                            <form asp-action="CreateNewSupplierMaterialResult">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <div class="form-group">
+                                    <label class="control-label">Supplier ID : @ViewBag.ID</label>
+                                    <input asp-for="supId" class="form-control" hidden="" value="@ViewBag.ID"/>
+                                    <span asp-validation-for="supId" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">Raw Material</label>
+                                    <select name="rawId" class="form-control">
+                                        @foreach (var item in ViewBag.Raw)
+                                        {
+                                            <option value="@item.Id">@item.Id - @item.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="PET" class="control-label"></label>
+                                    <input asp-for="PET" class="form-control" />
+                                    <span asp-validation-for="PET" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="Cost" class="control-label"></label>
+                                    <input asp-for="Cost" class="form-control" />
+                                    <span asp-validation-for="Cost" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="lead" class="control-label"></label>
+                                    <input asp-for="lead" class="form-control" />
+                                    <span asp-validation-for="lead" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <input type="submit" value="Create" class="btn btn-primary" />
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+

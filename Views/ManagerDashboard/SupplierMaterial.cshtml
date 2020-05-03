@@ -1,0 +1,70 @@
+﻿@model IEnumerable<SRIMAK.Models.SupplierMaterialModel>
+
+@{
+    ViewData["Title"] = "SupplierMaterial";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+<div class="col-md-12">
+    <div class="card ">
+        <div class="card-header ">
+            <div class="row">
+                <h4 class="card-title" style="margin-left: 20px;">Supplier Materials</h4>
+                <div class="col-md-1 offset-8"><a class="btn btn-primary btn-sm" href="@Url.Action("CreateNewSupplierMaterial","ManagerDashboard", new{supid = ViewBag.ID})" role="button"><b>Create New</b></a></div>
+            </div>
+            <p class="card-category" style="margin-left: 6px">Supplier ID : @ViewBag.ID </p>
+        </div>
+        <div class="card-body table-full-width table-responsive">
+            <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.rawId)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.rawName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.PET)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Cost)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.lead)
+                    </th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.rawId)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.rawName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.PET)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Cost)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.lead)
+                        </td>
+                        <td>
+                            <a rel="tooltip" title="Edit" class="btn btn-info btn-simple btn-link" href="@Url.Action("EditSupplierMaterial", "ManagerDashboard", new {supid = item.supId , rawid = item.rawId})" role="button"><i class="fa fa-edit"></i></a>
+                            <a rel="tooltip" title="Remove" class="btn btn-danger btn-simple btn-link" href="@Url.Action("DeleteSupplierMaterialResult", "ManagerDashboard", new {supid = item.supId , rawid = item.rawId})" role="button" onclick="return confirm('Are sure wants to delete?');"><i class="fa fa-times"></i></a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>

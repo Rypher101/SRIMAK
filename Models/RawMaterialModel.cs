@@ -15,10 +15,12 @@ namespace SRIMAK.Models
         [Required] public int Size { get; set; }
         [Required] public int QTY { get; set; }
         [Required] public int ROL { get; set; }
+        public int Buffer { get; set; }
+        public int Consumption { get; set; }
+        [Display(Name = "Stock Level")]public int Stock { get; set; }
+        [Display(Name = "Req. QTY")] public int Request { get; set; }
 
-        [Display(Name = "Requested QTY")] public int Request { get; set; }
-
-        [Display(Name="Last Requested Date")]
+        [Display(Name="Req. Date")]
         public string ReqDate { get; set; }   
 
     }

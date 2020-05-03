@@ -24,25 +24,34 @@
                         <tr>
                             <th>
                                 <a href="@Url.Action("Materials","ManagerDashboard" , new {sortPram = "rm_id" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Id)</a>
-</th>
+                            </th>
                             <th>
                                 <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "name" , typePram = @ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.Name) </a>
-</th>
+                            </th>
                             <th>
                                 <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "rm_size" , typePram = @ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.Size) </a>
-</th>
+                            </th>
                             <th>
                                 <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "qty" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.QTY) </a>
-</th>
+                            </th>
                             <th>
                                 <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "rol" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.ROL) </a>
-</th>
+                            </th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "buffer_stock" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Buffer) </a>
+                            </th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "max_consumption" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Consumption) </a>
+                            </th>
+                            <th>
+                                <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "stock_level " , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Stock) </a>
+                            </th>
                             <th>
                                 <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "request" , typePram = @ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.Request) </a>
-</th>
+                            </th>
                             <th>
                                 <a href="@Url.Action("Materials","ManagerDashboard", new {sortPram = "req_date" , typePram = @ViewData["sortType"]})"> @Html.DisplayNameFor(model => model.ReqDate) </a>
-</th>
+                            </th>
                             <th></th>
                         </tr>
                     </thead>
@@ -66,13 +75,24 @@
                                 @Html.DisplayFor(modelItem => item.ROL)
                             </td>
                             <td>
+                                @Html.DisplayFor(modelItem => item.Buffer)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Consumption)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Stock)
+                            </td>
+                            <td>
                                 @Html.DisplayFor(modelItem => item.Request)
                             </td>
                             <td>
                                 @Html.DisplayFor(modelItem => item.ReqDate)
                             </td>
-                            <td><a class="btn btn-success btn-sm" href="@Url.Action("EditMaterial","ManagerDashboard", new {id = item.Id})" role="button"><b>Edit</b></a></td>
-                            <td><a class="btn btn-danger btn-sm" href="@Url.Action("DeleteMaterialResult","ManagerDashboard", new {id = item.Id})" role="button" onclick="return confirm('Are sure wants to delete?');"><b>Delete</b></a></td>
+                            <td class="td-actions text-right">
+                                <a rel="tooltip" title="Edit" class="btn btn-info btn-simple btn-link" href="@Url.Action("EditMaterial","ManagerDashboard", new {id = item.Id})" role="button"><i class="fa fa-edit"></i></a>
+                                <a rel="tooltip" title="Remove" class="btn btn-danger btn-simple btn-link" href="@Url.Action("DeleteMaterialResult","ManagerDashboard", new {id = item.Id})" role="button" onclick="return confirm('Are sure wants to delete?');"> <i class="fa fa-times"></i></a>
+                            </td>
                         </tr>
                         }
                     </tbody>

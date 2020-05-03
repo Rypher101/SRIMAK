@@ -1,0 +1,64 @@
+﻿@model IEnumerable<SRIMAK.Models.RoutModel>
+
+@{
+    ViewData["Title"] = "Rout";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Routs</h4>
+                    <div class="col-md-1 offset-9"><a class="btn btn-primary btn-sm" href="@Url.Action("CreateNewRout","ManagerDashboard")" role="button"><b>Create New</b></a></div>
+                </div>
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a href="@Url.Action("Rout","ManagerDashboard" , new {sortPram = "rout_no" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.RoutId) </a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Rout","ManagerDashboard" , new {sortPram = "town" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Town)</a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Rout","ManagerDashboard" , new {sortPram = "rout.user_id" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.User)</a>
+</th>
+                            <th>
+                                <a href="@Url.Action("Rout","ManagerDashboard" , new {sortPram = "name" , typePram = @ViewData["sortType"]})">@Html.DisplayNameFor(model => model.Name)</a>
+</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.RoutId)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Town)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.User)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Name)
+                            </td>
+                            <td>
+                                <a rel="tooltip" title="Edit" class="btn btn-info btn-simple btn-link" href="@Url.Action("EditRout", "ManagerDashboard", new {id = item.RoutId})" role="button"><i class="fa fa-edit"></i></a>
+                                <a rel="tooltip" title="Remove" class="btn btn-danger btn-simple btn-link" href="@Url.Action("DeleteRoutResult", "ManagerDashboard", new {id = item.RoutId})" role="button" onclick="return confirm('Are sure wants to delete?');"><i class="fa fa-times"></i></a>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

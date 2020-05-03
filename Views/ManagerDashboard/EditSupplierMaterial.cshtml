@@ -1,0 +1,58 @@
+﻿@model SRIMAK.Models.SupplierMaterialModel
+
+@{
+    ViewData["Title"] = "EditSupplierMaterial";
+    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+}
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card ">
+                <div class="card-header ">
+                    <div class="row">
+                        <h4 class="card-title" style="margin-left: 20px;">Edit Materials</h4>
+                        <div class="col-md-1 offset-8"><a class="btn btn-primary btn-sm" href="@Url.Action("SupplierMaterial","ManagerDashboard", new{id = Model.supId})" role="button"><b>Back to list</b></a></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <hr />
+                    <div class="row">
+                        <div class="col-md-4 offset-4">
+                            <form asp-action="EditSupplierMaterialResult">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <div class="form-group">
+                                    <label class="control-label">Supplier : @Model.supId - @Model.supName</label>
+                                    <input asp-for="supId" class="form-control" readonly="" hidden=""/>
+                                    <span asp-validation-for="supId" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">Raw Material : @Model.rawId - @Model.rawName</label>
+                                    <input asp-for="rawId" class="form-control" readonly="" hidden=""/>
+                                    <span asp-validation-for="rawId" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="PET" class="control-label"></label>
+                                    <input asp-for="PET" class="form-control" />
+                                    <span asp-validation-for="PET" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="Cost" class="control-label"></label>
+                                    <input asp-for="Cost" class="form-control" />
+                                    <span asp-validation-for="Cost" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="lead" class="control-label"></label>
+                                    <input asp-for="lead" class="form-control" />
+                                    <span asp-validation-for="lead" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <input type="submit" value="Save" class="btn btn-primary" />
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
