@@ -57,6 +57,12 @@
                             <p>Finished Products</p>
                         </a>
                     </li>
+                    <li class="nav-item @ViewData["Clerk"]">
+                        <a class="nav-link " href="@Url.Action("Clerk","ManagerDashboard")">
+                            <i class="nc-icon nc-circle-09"></i>
+                            <p>Clerks</p>
+                        </a>
+                    </li>
                     <li class="nav-item @ViewData["Resellers"]">
                         <a class="nav-link " href="@Url.Action("Resellers","ManagerDashboard")">
                             <i class="nc-icon nc-cart-simple"></i>
@@ -83,56 +89,9 @@
                     </li>
                     <li class="nav-item @ViewData["Purchase"]">
 
-                        <a class="nav-link " data-toggle="collapse" href="">
+                        <a class="nav-link " href="@Url.Action("PurchaseOrder","ManagerDashboard")">
                             <i class="nc-icon nc-notes"></i>
-
-                            <p>Purchase Order <b class="caret"></b></p>
-                            <div class="collapse " id="componentsExamples">
-                                <ul class="nav">
-                                    <li class="nav-item ">
-                                        <a class="nav-link" href="../components/buttons.html">
-                                            <span class="sidebar-mini">B</span>
-                                            <span class="sidebar-normal">Buttons</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item ">
-                                        <a class="nav-link" href="../components/grid.html">
-                                            <span class="sidebar-mini">GS</span>
-                                            <span class="sidebar-normal">Grid System</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item ">
-                                        <a class="nav-link" href="../components/panels.html">
-                                            <span class="sidebar-mini">P</span>
-                                            <span class="sidebar-normal">Panels</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item ">
-                                        <a class="nav-link" href="../components/sweet-alert.html">
-                                            <span class="sidebar-mini">SA</span>
-                                            <span class="sidebar-normal">Sweet Alert</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item ">
-                                        <a class="nav-link" href="../components/notifications.html">
-                                            <span class="sidebar-mini">N</span>
-                                            <span class="sidebar-normal">Notifications</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item ">
-                                        <a class="nav-link" href="../components/icons.html">
-                                            <span class="sidebar-mini">I</span>
-                                            <span class="sidebar-normal">Icons</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item ">
-                                        <a class="nav-link" href="../components/typography.html">
-                                            <span class="sidebar-mini">T</span>
-                                            <span class="sidebar-normal">Typography</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
+                            <p>Purchase Order</p>
                         </a>
                     </li>
                 </ul>

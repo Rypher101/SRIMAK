@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SRIMAK.Models;
+using SHA256 = SshNet.Security.Cryptography.SHA256;
 
 namespace SRIMAK.Controllers
 {
@@ -37,11 +40,12 @@ namespace SRIMAK.Controllers
         {
             try
             {
+                var pass = ShaEncrypt(collection["Password"]);
                 var cmd = DBConn.Connection.CreateCommand();
                 cmd.CommandText =
                     @"SELECT user_id,name,email,doa,contact_number,address,type FROM user WHERE user_id=@userid AND password=@password";
                 cmd.Parameters.AddWithValue("@userid", collection["UserName"]);
-                cmd.Parameters.AddWithValue("@password", collection["Password"]);
+                cmd.Parameters.AddWithValue("@password", pass);
 
                 await using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -60,7 +64,20 @@ namespace SRIMAK.Controllers
 
                         HttpContext.Session.SetString("UID", model.UserId);
                         HttpContext.Session.SetString("Name", model.Name);
-                        return RedirectToAction("Index", "ManagerDashboard");
+
+                        switch (model.Type)
+                        {
+                            case 1:
+                                return RedirectToAction("Index", "ManagerDashboard");
+
+                            case 3:
+                                return RedirectToAction("Index", "ResellerDashboard");
+
+                            default:
+                                ViewData["Message"] = "Invalid login credentials!";
+                                return View("Create");
+                        }
+                       
                     }
                 }
 
@@ -69,9 +86,23 @@ namespace SRIMAK.Controllers
             }
             catch (Exception message)
             {
+                ViewData["Message"] = message;
                 Debug.WriteLine(message);
                 return View();
             }
+        }
+
+        private static string ShaEncrypt(string input)
+        {
+            using var sha256 = HashAlgorithm.Create("sha256");
+            // Send a sample text to hash.  
+            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+            // Get the hashed string.  
+            var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+            // Print the string.   
+            Console.WriteLine(hash);
+            return hash;
+
         }
 
         public ActionResult Logout()
@@ -80,50 +111,5 @@ namespace SRIMAK.Controllers
             return View("Create");
         }
 
-        // GET: Login/Edit/5
-        //public ActionResult Edit(int id)
-        //{
-        //    return View();
-        //}
-
-        //// POST: Login/Edit/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Edit(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        
-
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
-
-        //// GET: Login/Delete/5
-        //public ActionResult Delete(int id)
-        //{
-        //    return View();
-        //}
-
-        //// POST: Login/Delete/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Delete(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        
-
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
     }
 }

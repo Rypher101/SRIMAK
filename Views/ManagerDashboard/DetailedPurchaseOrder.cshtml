@@ -1,0 +1,65 @@
+﻿@model IEnumerable<SRIMAK.Models.PurchaseOrderMaterialsModel>
+
+@{
+    ViewData["Title"] = "DetailsPurchaseOrder";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+
+<div class="row">
+<div class="col-md-8 offset-2">
+    <div class="card ">
+        <div class="card-header ">
+            <div class="row">
+                <h4 class="card-title" style="margin-left: 20px;">Purchase Order</h4>
+            </div>
+
+
+        </div>
+        <div class="card-body table-full-width table-responsive">
+            <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.ID)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Name)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.perCost)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.QTY)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Cost)
+                    </th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model) {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.ID)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Name)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.perCost)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.QTY)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Cost)
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>

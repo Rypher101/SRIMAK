@@ -1,0 +1,240 @@
+﻿@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "PurcheseOrder";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <form asp-action="CreateNewPurchaseOrderResult" id="purchaseForm">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card ">
+                        <div class="card-header ">
+                            <h4 class="card-title">Material Order</h4>
+                        </div>
+                        <div class="card-body table-full-width">
+                            <table class="table table-hover" style="margin-left: 10px">
+                                <thead>
+                                    <tr align="center">
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>ROL</th>
+                                        <th>Stock</th>
+                                        <th>Request</th>
+                                        <th>QTY</th>
+                                        <th>Order</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in ViewBag.Raw)
+                                    {
+                                        <tr>
+                                            <td>@item.Id</td>
+                                            <td>@item.Name</td>
+                                            <td>@item.ROL</td>
+                                            <td>@item.Stock</td>
+                                            <td>@item.Request</td>
+                                            <td>@item.QTY</td>
+
+                                            @{
+                                                var suggest = 0;
+                                                var temp = item.Stock - item.QTY;
+
+                                                if (temp <= 0 || item.QTY > item.ROL)
+                                                {
+                                                    suggest = 0;
+                                                }
+                                                else
+                                                {
+                                                    suggest = temp;
+                                                }
+                                            }
+
+                                            <td>
+                                                <input type="text" class="form-control purcheseinput" name="@item.Id" id="@item.Id" value="@suggest" onkeyup="Generate()" />
+                                            </td>
+                                            <td>
+                                                <button type="button" rel="tooltip" title="" class="btn btn-info btn-simple btn-link" data-original-title="Set Recomended value" onclick="setRecomended(@item.Id, @suggest)">
+                                                    <i class="fa fa-magic"></i>
+                                                </button>
+                                                <button type="button" rel="tooltip" class="btn btn-danger btn-simple btn-link" data-original-title="Set Zero" onclick="setZero(@item.Id)">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <input id="supID" name="supID" hidden="" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card ">
+                        <div class="card-header ">
+                            <h4 class="card-title">Supplier Capacity</h4>
+                        </div>
+                        <div class="card-body table-full-width">
+                            <table class="table table-hover" style="margin-left: 10px">
+                                <thead>
+                                    <tr align="center">
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Cost</th>
+                                        <th>Days</th>
+                                        <th>Est. Date</th>
+                                        <th>Recommendation</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{ var i = 0; }
+                                    @foreach (var item in ViewBag.Sup)
+                                    {
+                                        if (i == item.supId)
+                                        {
+                                            continue;
+                                        }
+
+                                        <tr>
+                                            <td>@item.supId</td>
+                                            <td>@item.supName</td>
+                                            <td id="@item.supId cost"></td>
+                                            <td id="@item.supId lead"></td>
+                                            <td id="@item.supId date"></td>
+                                            <td id="@item.supId recom"></td>
+                                            <td>
+                                                <button type="button" rel="tooltip" class="btn btn-success btn-simple btn-link" data-original-title="Select this supplier" onclick="submitForm(@item.supId)">
+                                                    <i class="fa fa-user-plus"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        i = item.supId;
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function Generate() {
+        var supObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Sup) as string);
+        var rawObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Raw) as string);
+        var cost = 0,
+            lead = 0,
+            count2 = 0,
+            count = 0,
+            recommendation;
+        var x,
+            minCost,
+            minLead,
+            costSup = 0,
+            leadSup;
+        var today = new Date();
+        var supArray = [];
+
+        for (i = 0; i < rawObj.length; i++) {
+            if (parseInt(document.getElementById(rawObj[i].Id).value) > 0) {
+                count2++;
+            }
+        }
+
+        for (i = 0; i < supObj.length; i++) {
+            x = supObj[i].supId;
+
+            for (j = i; j < supObj.length; j++) {
+                if (supObj[j].supId != x) {
+                    break;
+                }
+
+                if (parseFloat(document.getElementById(supObj[j].rawId).value) > 0) {
+                    count++;
+                }
+
+                cost += parseFloat(supObj[j].Cost) * parseFloat(document.getElementById(supObj[j].rawId).value);
+                lead += (parseFloat(supObj[j].lead) / 1000) * parseFloat(document.getElementById(supObj[j].rawId).value);
+
+                i = j;
+            }
+
+            today.setDate(today.getDate() + parseFloat(lead));
+            var date = today.getFullYear() + ' - ' + (today.getMonth() + 1) + ' - ' + today.getDate();
+
+            if (count < count2) {
+                recommendation = "Not recommended.";
+            } else if (count > count2) {
+                recommendation = "Error!";
+            } else {
+                recommendation = "-";
+            }
+
+            document.getElementById(supObj[i].supId + " cost").innerHTML = cost;
+            document.getElementById(supObj[i].supId + " lead").innerHTML = lead.toFixed(2);
+            document.getElementById(supObj[i].supId + " date").innerHTML = date;
+            document.getElementById(supObj[i].supId + " recom").innerHTML = recommendation;
+
+            cost = 0;
+            lead = 0;
+            count = 0;
+            supArray.push(supObj[i].supId);
+        }
+
+        for (var i = 0; i < supArray.length; i++) {
+            if ((i == 0 || costSup == 0) && document.getElementById(supArray[i] + " recom").innerHTML == "-") {
+                minCost = parseFloat(document.getElementById(supArray[i] + " cost").innerHTML);
+                minLead = parseFloat(document.getElementById(supArray[i] + " lead").innerHTML);
+                costSup = supArray[i];
+                leadSup = supArray[i];
+                continue;
+            }
+
+            if (minCost > parseFloat(document.getElementById(supArray[i] + " cost").innerHTML) && document.getElementById(supArray[i] + " recom").innerHTML == "-") {
+                minCost = parseFloat(document.getElementById(supArray[i] + " cost").innerHTML);
+                costSup = supArray[i];
+            }
+
+            if (minLead > parseFloat(document.getElementById(supArray[i] + " lead").innerHTML) && document.getElementById(supArray[i] + " recom").innerHTML == "-") {
+                minLead = parseFloat(document.getElementById(supArray[i] + " lead").innerHTML);
+                leadSup = supArray[i];
+            }
+        }
+
+        document.getElementById(costSup + " recom").innerHTML = "Minimum cost.";
+        if (costSup == leadSup) {
+            document.getElementById(leadSup + " recom").innerHTML = "Minimum cost & lead time.";
+        } else {
+            document.getElementById(leadSup + " recom").innerHTML = "Minimum lead time.";
+        }
+    }
+
+    function submitForm(supid) {
+        if (confirm('Are sure wants to select this supplier?')) {
+            document.getElementById("supID").value = supid;
+            document.getElementById("purchaseForm").submit();
+        }
+    }
+
+    function setZero(x) {
+        document.getElementById(x).value = 0;
+        Generate();
+    }
+
+    function setRecomended(x, y) {
+        document.getElementById(x).value = y;
+        Generate();
+    }
+
+    window.onload = function() {
+        Generate();
+    };
+</script>

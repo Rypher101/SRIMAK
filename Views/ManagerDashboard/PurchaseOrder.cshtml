@@ -1,0 +1,86 @@
+﻿@model IEnumerable<SRIMAK.Models.PurchaseOrderModel>
+
+@{
+    ViewData["Title"] = "PurchaseOrder";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+
+<div class="row">
+<div class="col-md-12">
+<div class="card ">
+<div class="card-header ">
+    <div class="row">
+        <h4 class="card-title" style="margin-left: 20px;">Purchase Orders</h4>
+        <div class="col-md-1 offset-8"><a class="btn btn-primary btn-sm" href="@Url.Action("CreateNewPurchaseOrder","ManagerDashboard")" role="button"><b>Create New</b></a></div>
+    </div>
+
+
+</div>
+<div class="card-body table-full-width table-responsive">
+<table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.poid)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.sup)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Date)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Cost)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EDD)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.poid)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.sup)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Date)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Cost)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EDD)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Status)
+            </td>
+            <td class="td-actions text-right">
+                <a rel="tooltip" title="Details" class="btn btn-info btn-simple btn-link" href="@Url.Action("DetailedPurchaseOrder","ManagerDashboard", new {id = item.poid})" role="button"><i class="fa fa-edit"></i></a>
+                @if (item.Status == "Pending")
+                {
+                    <a rel="tooltip" title="Mark as received" class="btn btn-success btn-simple btn-link" href="@Url.Action("SetReceived","ManagerDashboard", new {id = item.poid})" role="button" onclick="return confirm('Are sure wants to this to mark as received?');"> <i class="fa fa-check"></i></a>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>
+</div>
+</div>
+</div>

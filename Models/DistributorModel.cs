@@ -8,7 +8,7 @@ namespace SRIMAK.Models
 {
     public class DistributorModel
     {
-        [Display(Name = "Distributor Name")] public int dis_id { get; set; }
+        [Display(Name = "Distributor ID")] public int dis_id { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
         public string NIC { get; set; }

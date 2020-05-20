@@ -1,0 +1,126 @@
+﻿@model SRIMAK.Models.ResellerModel
+
+@{
+    ViewData["Title"] = "Account";
+    Layout = "~/Views/Shared/_LayoutResellerDashabord.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Account</h4>
+            </div>
+            <div class="card-body">
+                <hr />
+                <div class="row">
+                    <div class="col-md-8 offset-2">
+                        <form asp-action="AccountResult" id="accountForm">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="row" style="margin-bottom: 10px">
+                                <div class="col">
+                                    <label asp-for="userID" class="control-label"></label>
+                                    <input asp-for="userID" class="form-control" required=""/>
+                                    <span asp-validation-for="userID" class="text-danger"></span>
+                                </div>
+                                <div class="col">
+                                    <label asp-for="Name" class="control-label"></label>
+                                    <input asp-for="Name" class="form-control" required=""/>
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-bottom: 10px">
+                                <div class="col">
+                                    <label asp-for="doa" class="control-label"></label>
+                                    <input name="doa" class="form-control" type="date" value="@ViewBag.date.ToString("yyyy-MM-d")" required=""/>
+                                    <span asp-validation-for="doa" class="text-danger"></span>
+                                </div>
+                                <div class="col">
+                                    <label asp-for="contact" class="control-label"></label>
+                                    <input asp-for="contact" class="form-control" required=""/>
+                                    <span asp-validation-for="contact" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-bottom: 10px">
+                                <div class="col">
+                                    <label asp-for="Address" class="control-label"></label>
+                                    <input asp-for="Address" class="form-control" required=""/>
+                                    <span asp-validation-for="Address" class="text-danger"></span>
+                                </div>
+                                <div class="col">
+                                    <label asp-for="Email" class="control-label"></label>
+                                    <input asp-for="Email" class="form-control" required=""/>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-bottom: 10px">
+                                <div class="col">
+                                    <label class="control-label">New Password</label>
+                                    <input name="Pass" id="Pass" class="form-control"  title="Hover mouse to see the password" type="password" onkeyup="passCompare()" onmouseenter="mouseIn('Pass')" onmouseleave="mouseOut('Pass')"/>
+                                </div>
+                                <div class="col">
+                                    <label class="control-label">Confirm New Password</label>
+                                    <input id="conPass" class="form-control" type="password" title="Hover mouse to see the password" onkeyup="passCompare()" onmouseenter="mouseIn('conPass')" onmouseleave="mouseOut('conPass')"/>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Rout" class="control-label"></label>
+                                <select name="Rout" class="form-control">
+                                    <option value="@Model.Rout">@Model.Rout - @Model.Town</option>
+                                    @foreach (var item in ViewBag.Rout)
+                                    {
+                                        if (Model.Rout != item.RoutId)
+                                        {
+                                            <option value="@item.RoutId">@item.RoutId - @item.Town</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <input value="@Model.userID" hidden="" name="prvUser"/>
+                            <div class="form-group">
+                                <input type="button" value="Save" class="btn btn-primary" onclick="accountSubmit()"/>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var passCorrect = 0;
+    var pass = document.getElementById("Pass");
+    var conPass = document.getElementById("conPass");
+
+    function mouseIn(id) {
+        document.getElementById(id).type = "text";
+    }
+
+    function mouseOut(id) {
+        document.getElementById(id).type = "password";
+    }
+
+    function passCompare(){
+    if (pass.value == conPass.value) {
+            passCorrect = 1;
+            pass.style.backgroundColor = "";
+            conPass.style.backgroundColor = "";
+        } else {
+            passCorrect = 0;
+            pass.style.backgroundColor = "lightpink";
+            conPass.style.backgroundColor = "lightpink";
+        }
+    }
+
+    function accountSubmit() {
+        if (passCorrect == 1 || pass.value=="") {
+            document.getElementById("accountForm").submit();
+        } else {
+            pass.style.backgroundColor = "lightpink";
+            conPass.style.backgroundColor = "lightpink";
+            alert("Password doesn't match with the confirmation password!");
+        }
+    }
+</script>

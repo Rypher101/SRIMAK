@@ -5312,4 +5312,8 @@ License - nucleoapp.com/license/
 	content: "\ea64";
 }
 
+.purcheseinput {
+	border: none;
+	border-bottom: 1px solid #888888;
+}
 /* all icon font classes list here */

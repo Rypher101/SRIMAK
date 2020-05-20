@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
+using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using MimeKit;
 using SRIMAK.Models;
 
 namespace SRIMAK.Controllers
@@ -35,24 +39,31 @@ namespace SRIMAK.Controllers
         }
 
         // DASHBOARD
-        private async Task<List<RawMaterialModel>> GetRawMaterials(int x = 0, string pram1 = "rm_id", string pram2 = null , int supid = 0)
+        private async Task<List<RawMaterialModel>> GetRawMaterials(int x = 0, string pram1 = "rm_id",
+            string pram2 = null, int supid = 0)
         {
             try
             {
                 var output = new List<RawMaterialModel>();
                 var cmd = DBConn.Connection.CreateCommand();
                 if (x == 1)
+                {
                     cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1";
+                }
                 else if (x == 2)
+                {
                     cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1 ORDER BY " + pram1 + " " + pram2;
+                }
                 else if (x == 3)
                 {
                     cmd.CommandText =
-                    "SELECT * FROM raw_materials WHERE status = 1 AND rm_id NOT IN (SELECT rm_id FROM material_supplier WHERE sup_id = @supid)";
+                        "SELECT * FROM raw_materials WHERE status = 1 AND rm_id NOT IN (SELECT rm_id FROM material_supplier WHERE sup_id = @supid)";
                     cmd.Parameters.AddWithValue("@supid", supid);
                 }
                 else
+                {
                     cmd.CommandText = "SELECT * FROM raw_materials WHERE (qty<=rol OR request>0) AND status = 1";
+                }
 
                 await using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -63,7 +74,7 @@ namespace SRIMAK.Controllers
                         if (reader.GetDateTime(9) == DateTime.Parse("0001-1-1"))
                             tempDate = "-";
                         else
-                            tempDate = reader.GetDateTime(9).ToString("D");
+                            tempDate = reader.GetDateTime(9).ToString("MMMM dd, yyyy");
 
                         var temp = new RawMaterialModel
                         {
@@ -212,8 +223,12 @@ namespace SRIMAK.Controllers
                 var cmd = DBConn.Connection.CreateCommand();
                 cmd.CommandText = "UPDATE raw_materials SET status = 0 WHERE rm_id = @rmid";
                 cmd.Parameters.AddWithValue("@rmid", id);
-
+                
                 var recs = cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "DELETE FROM material_supplier WHERE rm_id = @rmid";
+                cmd.Parameters.AddWithValue("@rmid", id);
+                cmd.ExecuteNonQuery();
 
                 if (recs > 0)
                 {
@@ -254,7 +269,8 @@ namespace SRIMAK.Controllers
             try
             {
                 var cmd = DBConn.Connection.CreateCommand();
-                cmd.CommandText = "INSERT INTO raw_materials (name,rm_size,qty,rol,buffer_stock,max_consumption,stock_level) VALUES(@name,@size,@qty,@rol,@buffer,@cons,@stock)";
+                cmd.CommandText =
+                    "INSERT INTO raw_materials (name,rm_size,qty,rol,buffer_stock,max_consumption,stock_level) VALUES(@name,@size,@qty,@rol,@buffer,@cons,@stock)";
                 cmd.Parameters.AddWithValue("@name", collection["Name"]);
                 cmd.Parameters.AddWithValue("@size", collection["Size"]);
                 cmd.Parameters.AddWithValue("@qty", collection["QTY"]);
@@ -647,7 +663,10 @@ namespace SRIMAK.Controllers
             {
                 var cmd = DBConn.Connection.CreateCommand();
                 cmd.CommandText =
-                    "INSERT INTO user(user_id,password,name,doa,contact_number,address,type,email,rout) VALUES (@userid,'admin',@name,@doa,@contact,@address,3,@email,@rout)";
+                    "INSERT INTO user(user_id,password,name,doa,contact_number,address,type,email,rout) VALUES (@userid,@pass,@name,@doa,@contact,@address,3,@email,@rout)";
+                //password: admin
+                cmd.Parameters.AddWithValue("@pass",
+                    "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918");
                 cmd.Parameters.AddWithValue("@userid", collection["userID"]);
                 cmd.Parameters.AddWithValue("@name", collection["Name"]);
                 cmd.Parameters.AddWithValue("@doa", collection["doa"]);
@@ -711,6 +730,153 @@ namespace SRIMAK.Controllers
             TempData["Message"] = "Unable to view new product!";
             TempData["MsgType"] = "4";
             return RedirectToAction(nameof(Resellers));
+        }
+
+        //Clerk
+        public async Task<ActionResult> Clerk(string sortPram = null, string typePram = null)
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new {id = 1});
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            var output = new List<ClerkModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+
+            if (sortPram == null)
+                cmd.CommandText =
+                    "SELECT user.user_id,name,doa,contact_number,address,email FROM user WHERE type = 2 AND status = 1";
+            else
+                cmd.CommandText =
+                    "SELECT user.user_id,name,doa,contact_number,address,email FROM user WHERE type = 2 AND status = 1 ORDER BY " +
+                    sortPram + " " + typePram;
+
+            if (typePram == null || typePram == "DESC")
+                ViewData["sortType"] = "ASC";
+            else
+                ViewData["sortType"] = "DESC";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new ClerkModel
+                    {
+                        userID = reader.GetFieldValue<string>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        doa = reader.GetFieldValue<DateTime>(2).ToString("D"),
+                        contact = reader.GetFieldValue<string>(3),
+                        Address = reader.GetFieldValue<string>(4),
+                        Email = reader.GetFieldValue<string>(5)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            SetActiveNavbar(9);
+            return View(output);
+        }
+
+        public ActionResult DeleteClerkResult(string user)
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "UPDATE user SET status = 0 WHERE user_id = @user";
+            cmd.Parameters.AddWithValue("@user", user);
+
+            var recs = cmd.ExecuteNonQuery();
+
+            if (recs > 0)
+            {
+                TempData["Message"] = "Clerk deleted!";
+                TempData["MsgType"] = "2";
+            }
+            else
+            {
+                TempData["Message"] = "Error occured while deleting the clerk";
+                TempData["MsgType"] = "4";
+            }
+
+            return RedirectToAction(nameof(Clerk));
+        }
+
+        public ActionResult CreateNewClerk()
+        {
+            //Session check
+            if (CheckSession())
+                return RedirectToAction("Index", "Login", new {id = 1});
+            TempData["User"] = HttpContext.Session.GetString("Name");
+
+            return View();
+        }
+
+        public ActionResult CreateNewClerkResult(IFormCollection collection)
+        {
+            try
+            {
+                var cmd = DBConn.Connection.CreateCommand();
+                cmd.CommandText =
+                    "INSERT INTO user(user_id,password,name,doa,contact_number,address,type,email) VALUES (@userid,'admin',@name,@doa,@contact,@address,2,@email)";
+                cmd.Parameters.AddWithValue("@userid", collection["userID"]);
+                cmd.Parameters.AddWithValue("@name", collection["Name"]);
+                cmd.Parameters.AddWithValue("@doa", collection["doa"]);
+                cmd.Parameters.AddWithValue("@contact", collection["contact"]);
+                cmd.Parameters.AddWithValue("@address", collection["Address"]);
+                cmd.Parameters.AddWithValue("@email", collection["Email"]);
+
+                var recs = cmd.ExecuteNonQuery();
+
+                if (recs > 0)
+                {
+                    TempData["Message"] = "New Clerk registered!";
+                    TempData["MsgType"] = "2";
+                    return RedirectToAction("ViewNewClerk", new {user = collection["userID"]});
+                }
+
+                TempData["Message"] = "Error Occured while registering the new Clerk. Please try again!";
+                TempData["MsgType"] = "4";
+            }
+            catch (Exception e)
+            {
+                TempData["Message"] = "Error Occured while registering the new Clerk. Please try again!";
+                TempData["MsgType"] = "4";
+
+                Console.WriteLine(e);
+            }
+
+            return RedirectToAction(nameof(Clerk));
+        }
+
+        public async Task<ActionResult> ViewNewClerk(string user)
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT user.user_id,name,doa,contact_number,address,email FROM user WHERE user.user_id = '" +
+                user + "'";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new ClerkModel
+                    {
+                        userID = reader.GetFieldValue<string>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        doa = reader.GetFieldValue<DateTime>(2).ToString("D"),
+                        contact = reader.GetFieldValue<string>(3),
+                        Address = reader.GetFieldValue<string>(4),
+                        Email = reader.GetFieldValue<string>(5)
+                    };
+
+                    TempData["Message"] = "New Clerk registered!";
+                    TempData["MsgType"] = "2";
+                    return View(temp);
+                }
+            }
+
+            TempData["Message"] = "Unable to view new product!";
+            TempData["MsgType"] = "4";
+            return RedirectToAction(nameof(Clerk));
         }
 
         //SUPPLIER
@@ -955,7 +1121,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var output = new List<SupplierMaterialModel>();
@@ -971,7 +1137,7 @@ namespace SRIMAK.Controllers
                     sortPram + " " + typePram;
 
             cmd.Parameters.AddWithValue("@supid", id);
-            
+
             if (typePram == null || typePram == "DESC")
                 ViewData["sortType"] = "ASC";
             else
@@ -1001,11 +1167,11 @@ namespace SRIMAK.Controllers
             return View(output);
         }
 
-        public async Task<ActionResult> EditSupplierMaterial(int supid,int rawid)
+        public async Task<ActionResult> EditSupplierMaterial(int supid, int rawid)
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var temp = new SupplierMaterialModel();
@@ -1068,14 +1234,14 @@ namespace SRIMAK.Controllers
             }
 
 
-            return RedirectToAction("SupplierMaterial", new { id = collection["supId"] });
+            return RedirectToAction("SupplierMaterial", new {id = collection["supId"]});
         }
 
         public ActionResult DeleteSupplierMaterialResult(int supid, int rawid)
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             try
@@ -1103,29 +1269,28 @@ namespace SRIMAK.Controllers
                 Console.WriteLine(e);
             }
 
-            return RedirectToAction("SupplierMaterial", new { id = supid });
+            return RedirectToAction("SupplierMaterial", new {id = supid});
         }
 
         public async Task<ActionResult> CreateNewSupplierMaterial(int supId)
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
-            var raw = await GetRawMaterials(x:3, supid:supId);
+            var raw = await GetRawMaterials(3, supid: supId);
             if (raw.Count == 0)
             {
                 TempData["Message"] =
-                    "There are no raw materials found to allocate to this user";
+                    "There are no raw materials found to allocate to this supplier";
                 TempData["MsgType"] = "4";
-                return RedirectToAction("SupplierMaterial", new { id = supId });
+                return RedirectToAction("SupplierMaterial", new {id = supId});
             }
 
             ViewBag.ID = supId;
             ViewBag.Raw = raw;
             return View();
-
         }
 
         public ActionResult CreateNewSupplierMaterialResult(IFormCollection collection)
@@ -1162,7 +1327,7 @@ namespace SRIMAK.Controllers
                 Console.WriteLine(e);
             }
 
-            return RedirectToAction("SupplierMaterial", new { id = collection["supId"] });
+            return RedirectToAction("SupplierMaterial", new {id = collection["supId"]});
         }
 
         //DISTRIBUTOR
@@ -1170,7 +1335,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var output = new List<DistributorModel>();
@@ -1218,7 +1383,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var rout = await GetRouts();
@@ -1231,10 +1396,10 @@ namespace SRIMAK.Controllers
             }
 
             var temp = new DistributorModel();
-            
+
             var cmd = DBConn.Connection.CreateCommand();
             cmd.CommandText =
-                "SELECT dis_id, name, email, nic, contact, vehi_no, vehi_type, distributor.rout_no, rout.town FROM distributor INNER JOIN rout ON distributor.rout_no = rout.rout_no WHERE status = 1 AND dis_id = @disid";
+                "SELECT dis_id, name, email, nic, contact, vehi_no, vehi_type, distributor.rout_no, rout.town FROM distributor INNER JOIN rout ON distributor.rout_no = rout.rout_no WHERE distributor.status = 1 AND dis_id = @disid";
             cmd.Parameters.AddWithValue("@disid", id);
 
             await using (var reader = await cmd.ExecuteReaderAsync())
@@ -1302,7 +1467,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             try
@@ -1336,7 +1501,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var rout = await GetRouts();
@@ -1347,6 +1512,7 @@ namespace SRIMAK.Controllers
                 TempData["MsgType"] = "4";
                 return RedirectToAction(nameof(Distributor));
             }
+
             ViewBag.Routs = rout;
 
             return View();
@@ -1429,7 +1595,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             var output = new List<RoutModel>();
@@ -1437,10 +1603,11 @@ namespace SRIMAK.Controllers
 
             if (sortPram == null)
                 cmd.CommandText =
-                    "SELECT rout_no,town,rout.user_id,user.name FROM rout INNER JOIN user ON rout.user_id = user.user_id WHERE status = 1";
+                    "SELECT rout_no,town,rout.user_id,user.name FROM rout INNER JOIN user ON rout.user_id = user.user_id WHERE rout.status = 1";
             else
                 cmd.CommandText =
-                    "SELECT rout_no,town,rout.user_id,user.name FROM rout INNER JOIN user ON rout.user_id = user.user_id WHERE status = 1 ORDER BY " + sortPram + " " + typePram;
+                    "SELECT rout_no,town,rout.user_id,user.name FROM rout INNER JOIN user ON rout.user_id = user.user_id WHERE rout.status = 1 ORDER BY " +
+                    sortPram + " " + typePram;
 
             if (typePram == null || typePram == "DESC")
                 ViewData["sortType"] = "ASC";
@@ -1457,7 +1624,6 @@ namespace SRIMAK.Controllers
                         Town = reader.GetFieldValue<string>(1),
                         User = reader.GetFieldValue<string>(2),
                         Name = reader.GetFieldValue<string>(3)
-                       
                     };
 
                     output.Add(temp);
@@ -1472,7 +1638,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             if (HttpContext.Session.GetString("UID") == null)
@@ -1516,29 +1682,27 @@ namespace SRIMAK.Controllers
                 {
                     TempData["Message"] = "This rout number is already assigned for another rout";
                     TempData["MsgType"] = "4";
-                    return RedirectToAction("EditRout", new { id = collection["Rout2"] });
+                    return RedirectToAction("EditRout", new {id = collection["Rout2"]});
+                }
+
+                cmd.CommandText =
+                    "UPDATE rout SET rout_no=@rout3,town=@town,user_id=@user  WHERE rout_no = @rout2";
+                cmd.Parameters.AddWithValue("@rout3", collection["RoutId"]);
+                cmd.Parameters.AddWithValue("@town", collection["Town"]);
+                cmd.Parameters.AddWithValue("@user", HttpContext.Session.GetString("UID"));
+                cmd.Parameters.AddWithValue("@rout2", collection["Rout2"]);
+
+                var recs2 = cmd.ExecuteNonQuery();
+
+                if (recs2 > 0)
+                {
+                    TempData["Message"] = "Rout update successful! : Rout ID = " + collection["RoutId"];
+                    TempData["MsgType"] = "2";
                 }
                 else
                 {
-                    cmd.CommandText =
-                        "UPDATE rout SET rout_no=@rout3,town=@town,user_id=@user  WHERE rout_no = @rout2";
-                    cmd.Parameters.AddWithValue("@rout3", collection["RoutId"]);
-                    cmd.Parameters.AddWithValue("@town", collection["Town"]);
-                    cmd.Parameters.AddWithValue("@user", HttpContext.Session.GetString("UID"));
-                    cmd.Parameters.AddWithValue("@rout2", collection["Rout2"]);
-
-                    var recs2 = cmd.ExecuteNonQuery();
-
-                    if (recs2 > 0)
-                    {
-                        TempData["Message"] = "Rout update successful! : Rout ID = " + collection["RoutId"];
-                        TempData["MsgType"] = "2";
-                    }
-                    else
-                    {
-                        TempData["Message"] = "Rout update faild!";
-                        TempData["MsgType"] = "4";
-                    }
+                    TempData["Message"] = "Rout update faild!";
+                    TempData["MsgType"] = "4";
                 }
             }
             catch (Exception e)
@@ -1555,7 +1719,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             try
@@ -1589,7 +1753,7 @@ namespace SRIMAK.Controllers
         {
             //Session check
             if (CheckSession())
-                return RedirectToAction("Index", "Login", new { id = 1 });
+                return RedirectToAction("Index", "Login", new {id = 1});
             TempData["User"] = HttpContext.Session.GetString("Name");
 
             if (HttpContext.Session.GetString("UID") == null)
@@ -1604,10 +1768,7 @@ namespace SRIMAK.Controllers
             cmd.CommandText = "SELECT MAX(rout_no) FROM rout";
             await using (var reader = await cmd.ExecuteReaderAsync())
             {
-                while (await reader.ReadAsync())
-                {
-                    routNo = reader.GetFieldValue<int>(0);
-                }
+                while (await reader.ReadAsync()) routNo = reader.GetFieldValue<int>(0);
             }
 
             ViewBag.RoutNo = routNo + 1;
@@ -1629,26 +1790,23 @@ namespace SRIMAK.Controllers
                     TempData["MsgType"] = "4";
                     return RedirectToAction(nameof(CreateNewRout));
                 }
-                else
+
+                cmd.CommandText =
+                    "INSERT INTO rout(rout_no,town,user_id) VALUES (@rout2,@town,@user)";
+                cmd.Parameters.AddWithValue("@rout2", collection["RoutId"]);
+                cmd.Parameters.AddWithValue("@town", collection["Town"]);
+                cmd.Parameters.AddWithValue("@user", HttpContext.Session.GetString("UID"));
+                var recs2 = cmd.ExecuteNonQuery();
+
+                if (recs2 > 0)
                 {
-                    cmd.CommandText =
-                        "INSERT INTO rout(rout_no,town,user_id) VALUES (@rout2,@town,@user)";
-                    cmd.Parameters.AddWithValue("@rout2", collection["RoutId"]);
-                    cmd.Parameters.AddWithValue("@town", collection["Town"]);
-                    cmd.Parameters.AddWithValue("@user", HttpContext.Session.GetString("UID"));
-                    var recs2 = cmd.ExecuteNonQuery();
-
-                    if (recs2 > 0)
-                    {
-                        TempData["Message"] = "New Rout registered!";
-                        TempData["MsgType"] = "2";
-                        return RedirectToAction("ViewNewRout", new { rout = collection["RoutId"] });
-                    }
-
-                    TempData["Message"] = "Error Occured while registering the new rout. Please try again!";
-                    TempData["MsgType"] = "4";
+                    TempData["Message"] = "New Rout registered!";
+                    TempData["MsgType"] = "2";
+                    return RedirectToAction("ViewNewRout", new {rout = collection["RoutId"]});
                 }
-               
+
+                TempData["Message"] = "Error Occured while registering the new rout. Please try again!";
+                TempData["MsgType"] = "4";
             }
             catch (Exception e)
             {
@@ -1676,7 +1834,6 @@ namespace SRIMAK.Controllers
                     {
                         RoutId = reader.GetFieldValue<int>(0),
                         Town = reader.GetFieldValue<string>(1)
-                        
                     };
 
                     TempData["Message"] = "New distributor registered!";
@@ -1690,12 +1847,270 @@ namespace SRIMAK.Controllers
             return RedirectToAction(nameof(Rout));
         }
 
-        //PURCHESE ORDER
-        public ActionResult PurcheseOrder()
+        //PURCHASE ORDER
+        private async Task<List<SupplierMaterialModel>> GetSupMaterial(string supid = null)
         {
-            return View();
+            var tempSup = new List<SupplierMaterialModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            if (supid == null)
+            {
+                cmd.CommandText =
+                    "SELECT material_supplier.sup_id, supplier.name, material_supplier.rm_id, raw_materials.name, material_supplier.pet, material_supplier.cost, material_supplier.lead_time FROM (material_supplier INNER JOIN supplier ON material_supplier.sup_id = supplier.sup_id) INNER JOIN raw_materials ON material_supplier.rm_id = raw_materials.rm_id ORDER BY material_supplier.sup_id";
+            }
+            else
+            {
+                cmd.CommandText =
+                    "SELECT material_supplier.sup_id, supplier.name, material_supplier.rm_id, raw_materials.name, material_supplier.pet, material_supplier.cost, material_supplier.lead_time FROM (material_supplier INNER JOIN supplier ON material_supplier.sup_id = supplier.sup_id) INNER JOIN raw_materials ON material_supplier.rm_id = raw_materials.rm_id WHERE material_supplier.sup_id = @supid ORDER BY material_supplier.rm_id";
+                cmd.Parameters.AddWithValue("@supid", supid);
+            }
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var temp = new SupplierMaterialModel
+                {
+                    supId = reader.GetFieldValue<int>(0),
+                    supName = reader.GetFieldValue<string>(1),
+                    rawId = reader.GetFieldValue<int>(2),
+                    rawName = reader.GetFieldValue<string>(3),
+                    PET = reader.GetFieldValue<int>(4),
+                    Cost = reader.GetFieldValue<decimal>(5),
+                    lead = reader.GetFieldValue<decimal>(6)
+                };
+
+                tempSup.Add(temp);
+            }
+
+            return tempSup;
         }
 
+        public async Task<ActionResult> PurchaseOrder()
+        {
+            var output = new List<PurchaseOrderModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "SELECT purchase_order.po_id,purchase_order.sup_id,name,date,edd,purchase_order.status, SUM(material_purchase.cost*material_purchase.qty) FROM (purchase_order INNER JOIN supplier ON purchase_order.sup_id = supplier.sup_id) INNER JOIN material_purchase ON purchase_order.po_id = material_purchase.po_id GROUP BY purchase_order.po_id";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new PurchaseOrderModel()
+                    {
+                        poid = reader.GetFieldValue<int>(0), sup = reader.GetFieldValue<int>(1),
+                        name = reader.GetFieldValue<string>(2), 
+                        Date = reader.GetFieldValue<DateTime>(3).ToString("d"), 
+                        EDD = reader.GetFieldValue<DateTime>(4).ToString("d"), 
+                        Status = reader.GetFieldValue<int>(5)==1 ? "Pending" : "Received", 
+                        Cost = reader.GetFieldValue<decimal>(6)
+                    }; 
+                    output.Add(temp);
+                }
+            }
+            return View(output);
+        }
+
+        public async Task<ActionResult> CreateNewPurchaseOrder()
+        {
+            var tempRaw = await GetRawMaterials(1);
+            var tempSup = await GetSupMaterial();
+
+            ViewBag.Raw = tempRaw;
+            ViewBag.Sup = tempSup;
+            return View();
+        } 
+
+        public async Task<ActionResult> CreateNewPurchaseOrderResult(IFormCollection collection)
+        {
+            var order = new List<decimal[]>();
+            var tempRaw = await GetRawMaterials(1);
+            var tempSup = await GetSupMaterial(collection["supID"]);
+            var cmd = DBConn.Connection.CreateCommand();
+
+            string mailTable = null;
+            decimal lead = 0, total = 0;
+            var qty = 0;
+
+            foreach (var item in tempRaw)
+            {
+                qty = int.Parse(collection[item.Id.ToString()]);
+                if (qty > 0)
+                    foreach (var item2 in tempSup)
+                        if (item2.rawId == item.Id)
+                        {
+                            order.Add(new[] {item.Id, qty, item2.Cost, item2.lead});
+                            mailTable += "<tr> <td>"+ item.Id+"</td>" + "<td>" + item.Name + "</td>" + "<td>" + item2.Cost + "</td>" + "<td>" + qty + "</td>" + "<td>" + item2.Cost * qty + "</td> </tr>";
+                            lead = lead+((item2.lead / 1000) * qty);
+                            total += item2.Cost * qty;
+                            break;
+                        }
+            }
+
+            var edd = DateTime.Today.AddDays(Decimal.ToDouble(lead));
+            Console.WriteLine("Inserting PO...");
+            cmd.CommandText = "INSERT INTO purchase_order(sup_id,edd) VALUES (@sup, @edd)";
+            cmd.Parameters.AddWithValue("@sup", collection["supID"]);
+            cmd.Parameters.AddWithValue("@edd", edd);
+            var recsMain = cmd.ExecuteNonQuery();
+            var poID = 0;
+
+            if (recsMain > 0)
+            {
+                Console.WriteLine("PO Inserted");
+                Console.WriteLine("Taking PO number...");
+                cmd.CommandText = "SELECT MAX(po_id) FROM purchase_order";
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    poID = reader.GetFieldValue<int>(0);
+                    Console.WriteLine("PO Number taken");
+                    break;
+                }
+            }
+            else
+            {
+                TempData["Message"] = "Couldn't create a purchase order";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(PurchaseOrder));
+            }
+
+            foreach (var item in order)
+                try
+                {
+                    cmd.Parameters.Clear();
+                    Console.WriteLine("Inserting material : " + item[0] + " with QTY : " + item[1]);
+
+                    cmd.CommandText = "INSERT INTO material_purchase VALUES (@rmid, @poid, @cost, @qty)";
+                    cmd.Parameters.AddWithValue("@rmid", item[0]);
+                    cmd.Parameters.AddWithValue("@poid", poID);
+                    cmd.Parameters.AddWithValue("@cost", item[2]);
+                    cmd.Parameters.AddWithValue("@qty", item[1]);
+                    cmd.ExecuteNonQuery();
+
+                    cmd.Parameters.Clear();
+                    cmd.CommandText =
+                        "UPDATE raw_materials SET request=request+@qty, req_date=@rqdate  WHERE rm_id = @rmid";
+                    cmd.Parameters.AddWithValue("@rmid", item[0]);
+                    cmd.Parameters.AddWithValue("@rqdate", DateTime.Today);
+                    cmd.Parameters.AddWithValue("@qty", item[1]);
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    TempData["Message"] = "Couldn't create a purchase order";
+                    TempData["MsgType"] = "4";
+                    return RedirectToAction(nameof(PurchaseOrder));
+                }
+
+            try
+            {
+                MimeMessage message = new MimeMessage();
+                MailboxAddress from = new MailboxAddress("SRIMAK","srimak101@gmail.com");
+                message.From.Add(from);
+
+                MailboxAddress to = new MailboxAddress("Test User 2","saubhagyaudani123@gmail.com");
+                message.To.Add(to);
+
+                message.Subject = "New Purchase Order " + poID;
+
+                BodyBuilder bb = new BodyBuilder();
+                bb.HtmlBody = "<h3>Purchase Order ID : " + poID + "</h3>" +
+                    "<table> <thead> <tr> " +
+                    "<th>ID</th> <th>Material</th> <th>Per Unit</th> <th>QTY</th> <th>Cost</th> " +
+                    "</tr> </thead>" +
+                    "<tbody>" + mailTable + "</tbody>" +
+                    "</table>" +
+                    "<h4>Total Cost : Rs." + total + "</h4>" +
+                    "<h4>Estimated Arrival Date : " + edd.ToString("D") + "</h4>";
+
+                message.Body = bb.ToMessageBody();
+
+                SmtpClient client = new SmtpClient();
+                client.Connect("smtp.gmail.com",465 , true);
+                client.Authenticate("srimak101@gmail.com" , "sri123456789");
+                client.Send(message);
+                client.Disconnect(true);
+                client.Dispose();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                TempData["Message"] = "An error occured while sending the email";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(DetailedPurchaseOrder));
+            }
+
+            TempData["Message"] = "Purchase order created";
+            TempData["MsgType"] = "2";
+            return RedirectToAction(nameof(DetailedPurchaseOrder));
+        }
+
+        public async Task<ActionResult> DetailedPurchaseOrder(int id = 0)
+        {
+            var poDetails = new List<PurchaseOrderMaterialsModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            if (id == 0)
+            {
+                cmd.CommandText = "SELECT material_purchase.rm_id, name, cost, material_purchase.qty FROM material_purchase INNER JOIN raw_materials ON material_purchase.rm_id = raw_materials.rm_id WHERE po_id = (SELECT MAX(po_id) FROM purchase_order)";
+            }
+            else
+            {
+                cmd.CommandText = "SELECT material_purchase.rm_id, name, cost, material_purchase.qty FROM material_purchase INNER JOIN raw_materials ON material_purchase.rm_id = raw_materials.rm_id WHERE po_id = @poid";
+                cmd.Parameters.AddWithValue("@poid", id);
+            }
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new PurchaseOrderMaterialsModel()
+                    {
+                        ID = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        perCost = reader.GetFieldValue<decimal>(2),
+                        Cost = reader.GetFieldValue<decimal>(2) * reader.GetFieldValue<int>(3),
+                        QTY = reader.GetFieldValue<int>(3)
+                    };
+                    poDetails.Add(temp);
+                }
+            }
+
+            return View(poDetails);
+        }
+
+        //add this to clerk controller
+        public async Task<ActionResult> SetReceived(int id)
+        {
+            List<int[]> matList = new List<int[]>();
+            var cmd = DBConn.Connection.CreateCommand();
+
+            cmd.CommandText = "SELECT rm_id, qty FROM material_purchase WHERE po_id = @poid";
+            cmd.Parameters.AddWithValue("@poid", id);
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    matList.Add(new []{reader.GetFieldValue<int>(0) , reader.GetFieldValue<int>(1)});
+                }
+            }
+
+            foreach (var item in matList)
+            {
+                cmd.Parameters.Clear();
+                cmd.CommandText = "UPDATE raw_materials SET request=request-@qty WHERE rm_id = @rmid";
+                cmd.Parameters.AddWithValue("@qty", item[1]);
+                cmd.Parameters.AddWithValue("@rmid", item[0]);
+                cmd.ExecuteNonQuery();
+            }
+
+            cmd.Parameters.Clear();
+            cmd.CommandText = "UPDATE purchase_order SET status = 2 WHERE po_id = @poid";
+            cmd.Parameters.AddWithValue("@poid", id);
+            cmd.ExecuteNonQuery();
+
+            TempData["Message"] = "Materials received";
+            TempData["MsgType"] = "2";
+            return RedirectToAction(nameof(PurchaseOrder));
+        }
 
         //MISC
         private void SetActiveNavbar(int x)
@@ -1732,6 +2147,10 @@ namespace SRIMAK.Controllers
 
                 case 8:
                     ViewData["Rout"] = "active";
+                    break;
+
+                case 9:
+                    ViewData["Clerk"] = "active";
                     break;
             }
         }

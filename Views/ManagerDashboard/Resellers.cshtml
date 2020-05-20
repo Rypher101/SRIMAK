@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Resellers";
-    Layout = "~/Views/Shared/_LayoutDashboard.cshtml";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
 }
 
 <div class="row">
@@ -74,6 +74,7 @@
                 <td>
                     @Html.DisplayFor(modelItem => item.Town)
                 </td>
+                <td> <a rel="tooltip" title="Remove" class="btn btn-danger btn-simple btn-link" href="@Url.Action("","ManagerDashboard", new {id = item.userID})" role="button" onclick="return confirm('Are sure wants to delete?');"> <i class="fa fa-times"></i></a></td>
             </tr>
         }
         </tbody>
