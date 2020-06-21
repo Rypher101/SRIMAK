@@ -1,0 +1,94 @@
+﻿@model IEnumerable<SalesOrderModel>
+
+@{
+    ViewData["Title"] = "SalesOrder";
+    Layout = "~/Views/Shared/_LayoutResellerDashbaord.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Sales Orders</h4>
+                    <div class="col-md-1 offset-9">
+                        <a class="btn btn-primary btn-sm" href="@Url.Action("CreateNewSalesOrder", "ResellerDashboard")" role="button">
+                            <b>Create New</b>
+                        </a>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                    <thead>
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.soID)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.date)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.dueDate)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Status)
+                        </th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.soID)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.date)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.dueDate)
+                            </td>
+                            <td>
+                                @{
+                                    var stat = "";
+                                    switch (item.Status)
+                                    {
+                                        case 1:
+                                            stat = "Pending";
+                                            break;
+
+                                        case 2:
+                                            stat = "Accepted";
+                                            break;
+
+                                        case 3:
+                                            stat = "Assigned to a distributor";
+                                            break;
+                                    }
+                                }
+                                @stat
+                            </td>
+                            <td>
+                                @if (item.Status == 3)
+                                {
+                                    <a rel="tooltip" title="Distributor Details" class="btn btn-simple btn-success btn-link" href="@Url.Action("ViewDistributor", "ResellerDashboard", new {id = item.disID})" role="button"><i class="fa fa-edit"></i></a>
+                                }
+                               
+                                @if (item.Status == 1)
+                                {
+                                    <a rel="tooltip" title="Remove Order" class="btn btn-danger btn-simple btn-link" href="@Url.Action("DeleteSalesOrderResult", "ResellerDashboard", new {id = item.soID})" role="button" onclick="return confirm('Are sure wants to delete?');"><i class="fa fa-times"></i></a>
+                                }
+                                <a rel="tooltip" title="Details" class="btn btn-simple btn-info btn-link" href="@Url.Action("ViewSalesOrder", "ResellerDashboard", new {id = item.soID})" role="button"><i class="fa fa-inbox"></i></a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

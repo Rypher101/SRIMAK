@@ -35,7 +35,87 @@ namespace SRIMAK.Controllers
             ViewData["MatCount"] = RawMaterial.Count;
             SetActiveNavbar(1);
 
-            return View(RawMaterial);
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "SELECT name FROM raw_materials WHERE status = 3";
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    string mat = ""; 
+                    while (await reader.ReadAsync())
+                    {
+                        if(mat == "")
+                        {
+                            mat =  reader.GetFieldValue<string>(0);
+                        }
+                        else
+                        {
+                            mat = mat + ", " + reader.GetFieldValue<string>(0);
+                        } 
+                    }
+
+                    if (mat != "")
+                    {
+                        TempData["Message"] = mat + " have met the ROL. Please refer the dashboard.";
+                        TempData["MsgType"] = "4";
+                    } 
+                }
+
+                cmd.CommandText = "UPDATE raw_materials SET status = 1 WHERE status = 3";
+                cmd.ExecuteNonQuery();
+
+                DateTime tempDate2 = new DateTime(2000,01,01);
+                DateTime todayDate = DateTime.Today;
+
+                cmd.CommandText = "SELECT meta_key, value1 FROM meta WHERE meta_key = 'rol'";
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while(await reader.ReadAsync())
+                    {
+                        tempDate2 = reader.GetFieldValue<DateTime>(1);
+                    }
+                }
+
+                if((tempDate2.Year.ToString() != todayDate.Year.ToString()) || (tempDate2.Month.ToString() != todayDate.Month.ToString()))
+                {
+                    var rawList = new List<FinishedProductModel>();
+                    cmd.CommandText = "SELECT finished_product.rm_id, AVG(sales_product.qty) FROM (finished_product INNER JOIN sales_product ON finished_product.pro_id = sales_product.pro_id) INNER JOIN sales_order ON sales_order.so_id = sales_product.so_id WHERE sales_order.status = 3 AND (YEAR(sales_order.date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(sales_order.date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)) GROUP BY finished_product.rm_id";
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while(await reader.ReadAsync())
+                        {
+                            var temp = new FinishedProductModel()
+                            {
+                                rm_id = reader.GetFieldValue<int>(0),
+                                avgQTY = reader.GetFieldValue<decimal>(1)
+                            };
+
+                            rawList.Add(temp);
+                        }
+                    }
+
+                    Dictionary<int, decimal> dict1 = new Dictionary<int, decimal>();
+                    Dictionary<int, decimal> dict2 = new Dictionary<int, decimal>();
+                    cmd.CommandText = "SELECT raw_materials.rm_id, MAX(lead_time), buffer_stock FROM material_supplier INNER JOIN raw_materials ON material_supplier.rm_id = raw_materials.rm_id GROUP BY raw_materials.rm_id";
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while(await reader.ReadAsync())
+                        {
+                            dict1.Add(reader.GetFieldValue<int>(0), reader.GetFieldValue<decimal>(1));
+                            dict2.Add(reader.GetFieldValue<int>(0), reader.GetFieldValue<int>(2));
+                        }
+                    }
+
+                    foreach(var item in rawList)
+                    {
+                        cmd.Parameters.Clear();
+                        var temp = (item.avgQTY * dict1[item.rm_id]) + dict2[item.rm_id];
+                        cmd.CommandText = "UPDATE raw_materials SET rol=@rol WHERE rm_id = @rmid";
+                        cmd.Parameters.AddWithValue("@rol", temp);
+                        cmd.Parameters.AddWithValue("@rmid", item.rm_id);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                return View(RawMaterial);
         }
 
         // DASHBOARD
@@ -48,21 +128,21 @@ namespace SRIMAK.Controllers
                 var cmd = DBConn.Connection.CreateCommand();
                 if (x == 1)
                 {
-                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1";
+                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1 OR status = 3";
                 }
                 else if (x == 2)
                 {
-                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1 ORDER BY " + pram1 + " " + pram2;
+                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1 OR status = 3 ORDER BY " + pram1 + " " + pram2;
                 }
                 else if (x == 3)
                 {
                     cmd.CommandText =
-                        "SELECT * FROM raw_materials WHERE status = 1 AND rm_id NOT IN (SELECT rm_id FROM material_supplier WHERE sup_id = @supid)";
+                        "SELECT * FROM raw_materials WHERE status = 1 or status = 3 AND rm_id NOT IN (SELECT rm_id FROM material_supplier WHERE sup_id = @supid)";
                     cmd.Parameters.AddWithValue("@supid", supid);
                 }
                 else
                 {
-                    cmd.CommandText = "SELECT * FROM raw_materials WHERE (qty<=rol OR request>0) AND status = 1";
+                    cmd.CommandText = "SELECT * FROM raw_materials WHERE (qty<=rol OR request>0) AND status = 1 or status = 3";
                 }
 
                 await using (var reader = await cmd.ExecuteReaderAsync())

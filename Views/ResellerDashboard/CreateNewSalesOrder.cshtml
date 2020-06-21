@@ -1,0 +1,112 @@
+﻿@using Newtonsoft.Json
+@model IEnumerable<SRIMAK.Models.FinishedProductModel>
+
+@{
+    ViewData["Title"] = "CreateNewSalesOrder";
+    Layout = "~/Views/Shared/_LayoutResellerDashbaord.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">New Sales Order</h4>
+                </div>
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <form asp-action="CreateNewSalesOrderResult" id="formSales">
+                    <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                        <thead>
+                            <tr>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.pro_id)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.Name)
+                                </th>
+                                <th>
+                                    UNIT @Html.DisplayNameFor(model => model.Price)
+                                </th>
+                                <th>Order</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.pro_id)
+                                    </td>
+                                    <td style="width: 250px">
+                                        @Html.DisplayFor(modelItem => item.Name)
+                                    </td>
+                                    <td>
+                                        Rs.@Html.DisplayFor(modelItem => item.Price)
+                                    </td>
+                                    <td>
+                                        <input type="number" id="@item.pro_id" name="@item.pro_id" value="0" class="form-control" onchange="priceCalc()" onkeyup="priceCalc()" />
+                                    </td>
+                                </tr>
+                            }
+                        <tr>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td align="right"><b>Request Before : </b></td>
+                            <td><input type="date" min="" id="dtp" name="reqDate" class="form-control" style="width: 250px" /></td>
+                            <td align="right"><b>Total Cost : </b></td>
+                            <td id="totCost" style="height: 64.8px"><b style="margin-top: 8px">Rs. 0.00</b></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <input type="button" value="Place Order" class="btn btn-primary" style="margin-left: 20px"  onclick="formSubmit()"/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var prodObj = @Html.Raw(JsonConvert.SerializeObject(Model) as string);
+    var isOrdered = false;
+
+    function priceCalc() {
+        var total = 0.00;
+
+        for (var i = 0; i < prodObj.length; i++) {
+            if (document.getElementById(prodObj[i].pro_id).value < 0) {
+                document.getElementById(prodObj[i].pro_id).value = 0;
+            }
+
+            total += parseFloat(document.getElementById(prodObj[i].pro_id).value) * parseFloat(prodObj[i].Price);
+        }
+
+        if (total > 0) {
+            isOrdered = true;
+        } else {
+            isOrdered = false;
+        }
+
+        document.getElementById("totCost").innerHTML = "<b style='margin-top: 8px'>Rs. " + total.toFixed(2) + "</b>";
+    }
+
+    function formSubmit() {
+        if (isOrdered) {
+            if (confirm('Are sure wants to place this order?')) {
+                document.getElementById("formSales").submit();
+            }
+        } else {
+            alert("No item ordered. Please order items to proceed");
+        }
+    }
+
+    window.onload = function () {
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById("dtp").value = tomorrow.toISOString().split("T")[0];
+        
+        document.getElementById("dtp").min = tomorrow.toISOString().split("T")[0];
+    };
+</script>
+

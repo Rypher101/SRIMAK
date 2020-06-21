@@ -70,6 +70,9 @@ namespace SRIMAK.Controllers
                             case 1:
                                 return RedirectToAction("Index", "ManagerDashboard");
 
+                            case 2:
+                                return RedirectToAction("Index", "ClerkDashboard");
+
                             case 3:
                                 return RedirectToAction("Index", "ResellerDashboard");
 

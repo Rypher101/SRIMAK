@@ -13,5 +13,7 @@ namespace SRIMAK.Models
         [Required] [Display(Name = "Material ID")] public int rm_id { get; set; }
 
         [Display(Name = "Material")] public string rm_name { get; set; }
+
+        public decimal avgQTY { get; set; }
     }
 }

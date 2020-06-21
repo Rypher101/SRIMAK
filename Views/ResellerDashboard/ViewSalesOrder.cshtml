@@ -1,0 +1,66 @@
+﻿@model IEnumerable<SRIMAK.Models.SalesOrderModel>
+
+@{
+    ViewData["Title"] = "ViewSalesOrder";
+    Layout = "~/Views/Shared/_LayoutResellerDashbaord.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Sales Orders Details</h4>
+                </div>
+
+
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                    <thead>
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.proID)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.prod)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.QTY)
+                        </th>
+                        <th>
+                            PER UNIT
+                        </th>
+                        <th>
+                            TOTAL
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.proID)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.prod)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.QTY)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Cost)
+                            </td>
+                            <td>
+                                @{ var tot = item.Cost * item.QTY; }
+                                @tot
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+

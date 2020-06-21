@@ -1,0 +1,63 @@
+﻿@model SRIMAK.Models.DistributorModel
+
+@{
+    ViewData["Title"] = "ViewDistributor";
+    Layout = "~/Views/Shared/_LayoutResellerDashbaord.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Distributor</h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div>
+                    <hr />
+                    <div class="col-md-10 offset-4">
+                        <dl class="row">
+                            <dt class = "col-sm-2">
+                                @Html.DisplayNameFor(model => model.dis_id)
+                            </dt>
+                            <dd class = "col-sm-10">
+                                @Html.DisplayFor(model => model.dis_id)
+                            </dd>
+                            <dt class = "col-sm-2">
+                                @Html.DisplayNameFor(model => model.Name)
+                            </dt>
+                            <dd class = "col-sm-10">
+                                @Html.DisplayFor(model => model.Name)
+                            </dd>
+                            <dt class = "col-sm-2">
+                                @Html.DisplayNameFor(model => model.Email)
+                            </dt>
+                            <dd class = "col-sm-10">
+                                @Html.DisplayFor(model => model.Email)
+                            </dd>
+                            <dt class = "col-sm-2">
+                                @Html.DisplayNameFor(model => model.Contact)
+                            </dt>
+                            <dd class = "col-sm-10">
+                                @Html.DisplayFor(model => model.Contact)
+                            </dd>
+                            <dt class = "col-sm-2">
+                                @Html.DisplayNameFor(model => model.vehi_no)
+                            </dt>
+                            <dd class = "col-sm-10">
+                                @Html.DisplayFor(model => model.vehi_no)
+                            </dd>
+                            <dt class = "col-sm-2">
+                                @Html.DisplayNameFor(model => model.vehi_type)
+                            </dt>
+                            <dd class = "col-sm-10">
+                                @Html.DisplayFor(model => model.vehi_type)
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

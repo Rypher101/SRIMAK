@@ -1,0 +1,58 @@
+﻿@model IEnumerable<SRIMAK.Models.RawMaterialModel>
+
+@{
+    ViewData["Title"] = "Consumption";
+    Layout = "~/Views/Shared/_LayoutClerkDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Raw Materials</h4>
+                </div>
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <form asp-action="CreateNewConsumptionResult">
+                    <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                        <thead>
+                        <tr>
+                            <th>
+                                @Html.DisplayNameFor(model => model.Id)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.Name)
+                            </th>
+                            <th>Production</th>
+                            <th>Wastage</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Id)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Name)
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control purcheseinput" name="@item.Id prod" value="0" />
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control purcheseinput" name="@item.Id wast" value="0" />
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                    <div>
+                        <input type="submit" value="Submit" class="btn btn-primary" style="margin-left: 20px;"/>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

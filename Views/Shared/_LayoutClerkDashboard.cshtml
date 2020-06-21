@@ -25,7 +25,7 @@
 
 <body>
     <div class="wrapper">
-        <div class="sidebar" data-image="../../Dashboards/assets/img/test2.jpg" data-color="purple">
+        <div class="sidebar" data-image="../../Dashboards/assets/img/test2.jpg" data-color="black">
 
             <!--
             Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
@@ -40,17 +40,18 @@
                 </div>
                 <ul class="nav">
                     <li class="nav-item @ViewData["Dashboard"]">
-                        <a class="nav-link" href="@Url.Action("Index","ResellerDashboard")">
+                        <a class="nav-link" href="@Url.Action("Index","ClerkDashboard")">
                             <i class="nc-icon nc-chart-pie-35"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
-                    <li class="nav-item @ViewData["Clerk"]">
-                        <a class="nav-link " href="@Url.Action("Account","ResellerDashboard")">
-                            <i class="nc-icon nc-circle-09"></i>
-                            <p>Acoount</p>
+                    <li class="nav-item @ViewData["Materials"]">
+                        <a class="nav-link " href="@Url.Action("Consumption","ClerkDashboard")">
+                            <i class="nc-icon nc-grid-45"></i>
+                            <p>Daily Consumption</p>
                         </a>
                     </li>
+                    
                 </ul>
             </div>
         </div>
