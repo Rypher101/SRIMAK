@@ -202,5 +202,193 @@ namespace SRIMAK.Controllers
             TempData["MsgType"] = "2";
             return RedirectToAction(nameof(CreateNewConsumption));
         }
+
+        public async Task<ActionResult> SalesOrder()
+        {
+            var output = new List<SalesOrderModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT so_id, date, due_date, user.name, distributor.name, sales_order.status FROM (sales_order INNER JOIN user ON sales_order.user_id = user.user_id) LEFT JOIN distributor ON sales_order.dis_id = distributor.dis_id ORDER BY sales_order.status, date, date";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new SalesOrderModel()
+                    {
+                        soID = reader.GetFieldValue<int>(0),
+                        date = reader.GetFieldValue<DateTime>(1).ToString("d"),
+                        dueDate = reader.GetFieldValue<DateTime>(2).ToString("d"),
+                        userName = reader.GetFieldValue<string>(3),
+                        disName = reader.GetValue(4) is DBNull ? "-" : reader.GetFieldValue<string>(4),
+                        Status = reader.GetFieldValue<int>(5)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            return View(output);
+
+        }
+
+        public async Task<ActionResult> ViewSalesOrder(int id)
+        {
+            var isNewQty = 0;
+            var output = new List<SalesOrderModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "SELECT sales_product.pro_id, finished_product.name, sales_product.qty, new_qty, sales_product.cost, sales_order.status FROM (sales_product INNER JOIN finished_product ON sales_product.pro_id = finished_product.pro_id) INNER JOIN sales_order ON sales_product.so_id=sales_order.so_id WHERE sales_product.so_id = @soid";
+            cmd.Parameters.AddWithValue("@soid", id);
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new SalesOrderModel()
+                    {
+                        proID = reader.GetFieldValue<int>(0),
+                        prod = reader.GetFieldValue<string>(1),
+                        QTY = reader.GetFieldValue<int>(2),
+                        newQTY = reader.GetFieldValue<int>(3),
+                        Cost = reader.GetFieldValue<decimal>(4)
+                    };
+
+                    ViewBag.status = reader.GetFieldValue<int>(5);
+                    if (isNewQty == 0 && reader.GetFieldValue<int>(3) > 0)
+                    {
+                        isNewQty = 1;
+                    }
+                    output.Add(temp);
+                }
+            }
+
+            if (ViewBag.status == 2)
+            {
+                var tempDis = new List<DistributorModel>();
+                cmd.CommandText = "SELECT dis_id, name, vehi_type FROM distributor ORDER BY MOD(dis_id, (SELECT rout FROM sales_order INNER JOIN user ON sales_order.user_id=user.user_id WHERE so_id=@soid))";
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var temp = new DistributorModel()
+                    {
+                        dis_id = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        vehi_type = reader.GetFieldValue<string>(2)
+                    };
+
+                    tempDis.Add(temp);
+                }
+
+                ViewBag.disList = tempDis;
+            }
+            else if(ViewBag.status == 3)
+            {
+                var tempDis = new DistributorModel();
+                cmd.CommandText = "SELECT dis_id, name, email, contact, vehi_no, vehi_type, distributor.rout_no, town FROM distributor INNER JOIN rout ON distributor.rout_no=rout.rout_no WHERE dis_id=(SELECT dis_id FROM sales_order WHERE so_id=@soid)";
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    tempDis.dis_id = reader.GetFieldValue<int>(0);
+                    tempDis.Name = reader.GetFieldValue<string>(1);
+                    tempDis.Email = reader.GetFieldValue<string>(2);
+                    tempDis.Contact = reader.GetFieldValue<string>(3);
+                    tempDis.vehi_no = reader.GetFieldValue<string>(4);
+                    tempDis.vehi_type = reader.GetFieldValue<string>(5);
+                    tempDis.Rout = reader.GetFieldValue<int>(6);
+                    tempDis.Town = reader.GetFieldValue<string>(7);
+                }
+
+                ViewBag.disList = tempDis;
+            }
+
+            TempData["soID"] = id;
+            ViewBag.newQTY = isNewQty;
+            return View(output);
+        }
+
+        public async Task<ActionResult> ViewSalesOrderDetailsResult(IFormCollection collection)
+        {
+            if (TempData["soID"] == null)
+            {
+                TempData["Message"] = "Couldn't find sales order. Please try again";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(SalesOrder));
+            }
+
+            var proList = new List<FinishedProductModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "SELECT pro_id FROM finished_product";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new FinishedProductModel()
+                    {
+                        pro_id = reader.GetFieldValue<int>(0)
+                    };
+                    proList.Add(temp);
+                }
+            }
+
+            cmd.CommandText = "UPDATE sales_order SET status = 2 WHERE so_id = @so";
+            cmd.Parameters.AddWithValue("@so", TempData["soID"]);
+            cmd.ExecuteNonQuery();
+            cmd.Parameters.Clear();
+
+            int recs = 0;
+            foreach (var item in proList)
+            {
+                if (collection[item.pro_id.ToString()] != "")
+                {
+                    cmd.CommandText = "UPDATE sales_product SET new_qty = @qty WHERE pro_id = @pro AND so_id = @so";
+                    cmd.Parameters.AddWithValue("@qty", int.Parse(collection[item.pro_id.ToString()]));
+                    cmd.Parameters.AddWithValue("@pro", item.pro_id);
+                    cmd.Parameters.AddWithValue("@so", TempData["soID"]);
+                    recs += cmd.ExecuteNonQuery();
+                    cmd.Parameters.Clear();
+                }
+            }
+
+            if (recs > 0)
+            {
+                TempData["Message"] = "New order updated and accepted!";
+                TempData["MsgType"] = "2";
+            }
+            else
+            {
+                TempData["Message"] = "Order accepted!";
+                TempData["MsgType"] = "2";
+            }
+
+            return RedirectToAction(nameof(SalesOrder));
+        }
+
+        public ActionResult ViewSalesOrderDistributorResult(IFormCollection collection)
+        {
+            if (TempData["soID"] == null)
+            {
+                TempData["Message"] = "Couldn't find sales order. Please try again";
+                TempData["MsgType"] = "4";
+                return RedirectToAction(nameof(SalesOrder));
+            }
+
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "UPDATE sales_order SET dis_id = @dis, status = 3 WHERE so_id = @soid";
+            cmd.Parameters.AddWithValue("@dis", collection["dis"]);
+            cmd.Parameters.AddWithValue("@soid", TempData["soID"]);
+            var recs = cmd.ExecuteNonQuery();
+
+            if (recs > 0)
+            {
+                TempData["Message"] = "Distributor assigned!";
+                TempData["MsgType"] = "2";
+                return RedirectToAction(nameof(SalesOrder));
+            }
+            else
+            {
+                TempData["Message"] = "Couldn't assign the distributor. Please try again";
+                TempData["MsgType"] = "4";
+                return RedirectToAction("ViewSalesOrder", new { id = TempData["soID"] });
+            }
+        }
+
     }
-}
+}   

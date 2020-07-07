@@ -11,10 +11,13 @@ namespace SRIMAK.Models
         [Display(Name = "Order ID")] public int soID { get; set; }
         [Display(Name = "Placed Date")] public string date { get; set; }
         [Display(Name = "Due Date")] public string dueDate { get; set; }
+        [Display(Name = "Reseller")] public string userName { get; set; }
         public int disID { get; set; }
+        [Display(Name = "Distributor")] public string disName { get; set; }
         [Display(Name = "Product ID")]public int proID { get; set; }
         [Display(Name = "Product")] public string prod { get; set; }
         public int QTY { get; set; }
+        [Display(Name = "New QTY")] public int newQTY { get; set; }
         public decimal Cost { get; set; }
         public int Status { get; set; }
     }
