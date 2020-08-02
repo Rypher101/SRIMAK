@@ -1,0 +1,125 @@
+﻿@model SRIMAK.Models.DailyIndoorTestModel
+
+@{
+    ViewData["Title"] = "UpdateDailyIndoorTest";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Update Daily Indoor Test Result</h4>
+            </div>
+            <div class="card-body">
+                <hr />
+                <div class="row">
+                    <div class="col-md-4 offset-4">
+                        <form asp-action="UpdateDailyIndoorTestResult" id="dailyForm">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <label asp-for="PH" class="control-label"></label>
+                                <input asp-for="PH" class="form-control" type="number" onkeyup="ph()" onchange="ph()" onfocusout="phFoc()" />
+                                <span asp-validation-for="PH" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Hardness" class="control-label"> Hardness (mg/l)</label>
+                                <input asp-for="Hardness" class="form-control" type="number" onkeyup="hrd()" onchange="hrd()" onfocusout="hrdFoc()" />
+                                <span asp-validation-for="Hardness" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="fe" class="control-label"> Fe. Composition (mg/l)</label>
+                                <input asp-for="fe" class="form-control" type="number" onkeyup="feComp()" onchange="feComp()" onfocusout="feFoc()" />
+                                <span asp-validation-for="fe" class="text-danger"></span>
+                            </div>
+                            <div class="offset-9">
+                                <input type="button" value="Update" class="btn btn-primary" onclick="submitForm()" />
+                            </div>
+                            <input type="hidden" id="result" name="result" />
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var phV = false;
+    var hrdV = false;
+    var feV = false;
+
+    function ph() {
+        if (document.getElementById("PH").value < 8.5 && document.getElementById("PH").value > 6.5) {
+            document.getElementById("PH").style.backgroundColor = "";
+            phV = true;
+        } else {
+            document.getElementById("PH").style.backgroundColor = "lightpink";
+            demo.showNotification("PH level should be within 6.5 and 8.5", "4");
+            phV = false;
+        }
+    }
+
+    function phFoc() {
+        if (document.getElementById("PH").value == "") {
+            document.getElementById("PH").value = 0;
+        }
+        ph();
+    }
+
+    function hrd() {
+        if (document.getElementById("Hardness").value < 250) {
+            document.getElementById("Hardness").style.backgroundColor = "";
+            hrdV = true;
+        } else {
+            document.getElementById("Hardness").style.backgroundColor = "lightpink";
+            demo.showNotification("Hardness should be less than 250mg / l", "4");
+            hrdV = false;
+        }
+    }
+
+    function hrdFoc() {
+        if (document.getElementById("Hardness").value == "") {
+            document.getElementById("Hardness").value = 0;
+        }
+        hrd();
+    }
+
+    function feComp() {
+        if (document.getElementById("fe").value < 0.3) {
+            document.getElementById("fe").style.backgroundColor = "";
+            feV = true;
+        } else {
+            document.getElementById("fe").style.backgroundColor = "lightpink";
+            demo.showNotification("Ferrous composition should be less than 0.3mg/l", "4");
+            feV = false;
+        }
+    }
+
+    function feFoc() {
+        if (document.getElementById("fe").value == "") {
+            document.getElementById("fe").value = 0;
+        }
+        feComp();
+    }
+
+    function submitForm() {
+        feFoc();
+        hrdFoc();
+        phFoc();
+
+        if (phV && hrdV && feV) {
+            document.getElementById("result").value = 1;
+        } else {
+            document.getElementById("result").value = 0;
+        }
+
+        document.getElementById("dailyForm").submit();
+    }
+
+    window.onload = function () {
+        feFoc();
+        hrdFoc();
+        phFoc();
+    }
+
+</script>

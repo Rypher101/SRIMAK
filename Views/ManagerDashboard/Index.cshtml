@@ -119,3 +119,12 @@
         </div>
     </div>
 </div>
+
+<script type="text/javascript">
+    window.onload = function() {
+        if (@ViewBag.temp < 30 || @ViewBag.temp > 35) {
+            var o = "o";
+            demo.showNotification("Warning! Water temperature is not within acceptable parameters : @ViewBag.temp\C" + o.sup(), "4");
+        }
+    }
+</script>

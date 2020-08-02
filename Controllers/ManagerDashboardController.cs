@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Http;
@@ -37,85 +34,81 @@ namespace SRIMAK.Controllers
 
             var cmd = DBConn.Connection.CreateCommand();
             cmd.CommandText = "SELECT name FROM raw_materials WHERE status = 3";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                var mat = "";
+                while (await reader.ReadAsync())
+                    if (mat == "")
+                        mat = reader.GetFieldValue<string>(0);
+                    else
+                        mat = mat + ", " + reader.GetFieldValue<string>(0);
+
+                if (mat != "")
+                {
+                    TempData["Message"] = mat + " have met the ROL. Please refer the dashboard.";
+                    TempData["MsgType"] = "4";
+                }
+            }
+
+            cmd.CommandText = "UPDATE raw_materials SET status = 1 WHERE status = 3";
+            cmd.ExecuteNonQuery();
+
+            var tempDate2 = new DateTime(2000, 01, 01);
+            var todayDate = DateTime.Today;
+
+            cmd.CommandText = "SELECT meta_key, value1 FROM meta WHERE meta_key = 'rol'";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync()) tempDate2 = reader.GetFieldValue<DateTime>(1);
+            }
+
+            if (tempDate2.Year.ToString() != todayDate.Year.ToString() ||
+                tempDate2.Month.ToString() != todayDate.Month.ToString())
+            {
+                var rawList = new List<FinishedProductModel>();
+                cmd.CommandText =
+                    "SELECT finished_product.rm_id, AVG(sales_product.qty) FROM (finished_product INNER JOIN sales_product ON finished_product.pro_id = sales_product.pro_id) INNER JOIN sales_order ON sales_order.so_id = sales_product.so_id WHERE sales_order.status = 3 AND (YEAR(sales_order.date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(sales_order.date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)) GROUP BY finished_product.rm_id";
                 await using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    string mat = ""; 
                     while (await reader.ReadAsync())
                     {
-                        if(mat == "")
+                        var temp = new FinishedProductModel
                         {
-                            mat =  reader.GetFieldValue<string>(0);
-                        }
-                        else
-                        {
-                            mat = mat + ", " + reader.GetFieldValue<string>(0);
-                        } 
-                    }
+                            rm_id = reader.GetFieldValue<int>(0),
+                            avgQTY = reader.GetFieldValue<decimal>(1)
+                        };
 
-                    if (mat != "")
-                    {
-                        TempData["Message"] = mat + " have met the ROL. Please refer the dashboard.";
-                        TempData["MsgType"] = "4";
-                    } 
+                        rawList.Add(temp);
+                    }
                 }
 
-                cmd.CommandText = "UPDATE raw_materials SET status = 1 WHERE status = 3";
-                cmd.ExecuteNonQuery();
-
-                DateTime tempDate2 = new DateTime(2000,01,01);
-                DateTime todayDate = DateTime.Today;
-
-                cmd.CommandText = "SELECT meta_key, value1 FROM meta WHERE meta_key = 'rol'";
+                var dict1 = new Dictionary<int, decimal>();
+                var dict2 = new Dictionary<int, decimal>();
+                cmd.CommandText =
+                    "SELECT raw_materials.rm_id, MAX(lead_time), buffer_stock FROM material_supplier INNER JOIN raw_materials ON material_supplier.rm_id = raw_materials.rm_id GROUP BY raw_materials.rm_id";
                 await using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    while(await reader.ReadAsync())
+                    while (await reader.ReadAsync())
                     {
-                        tempDate2 = reader.GetFieldValue<DateTime>(1);
+                        dict1.Add(reader.GetFieldValue<int>(0), reader.GetFieldValue<decimal>(1));
+                        dict2.Add(reader.GetFieldValue<int>(0), reader.GetFieldValue<int>(2));
                     }
                 }
 
-                if((tempDate2.Year.ToString() != todayDate.Year.ToString()) || (tempDate2.Month.ToString() != todayDate.Month.ToString()))
+                foreach (var item in rawList)
                 {
-                    var rawList = new List<FinishedProductModel>();
-                    cmd.CommandText = "SELECT finished_product.rm_id, AVG(sales_product.qty) FROM (finished_product INNER JOIN sales_product ON finished_product.pro_id = sales_product.pro_id) INNER JOIN sales_order ON sales_order.so_id = sales_product.so_id WHERE sales_order.status = 3 AND (YEAR(sales_order.date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(sales_order.date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)) GROUP BY finished_product.rm_id";
-                    await using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while(await reader.ReadAsync())
-                        {
-                            var temp = new FinishedProductModel()
-                            {
-                                rm_id = reader.GetFieldValue<int>(0),
-                                avgQTY = reader.GetFieldValue<decimal>(1)
-                            };
-
-                            rawList.Add(temp);
-                        }
-                    }
-
-                    Dictionary<int, decimal> dict1 = new Dictionary<int, decimal>();
-                    Dictionary<int, decimal> dict2 = new Dictionary<int, decimal>();
-                    cmd.CommandText = "SELECT raw_materials.rm_id, MAX(lead_time), buffer_stock FROM material_supplier INNER JOIN raw_materials ON material_supplier.rm_id = raw_materials.rm_id GROUP BY raw_materials.rm_id";
-                    await using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while(await reader.ReadAsync())
-                        {
-                            dict1.Add(reader.GetFieldValue<int>(0), reader.GetFieldValue<decimal>(1));
-                            dict2.Add(reader.GetFieldValue<int>(0), reader.GetFieldValue<int>(2));
-                        }
-                    }
-
-                    foreach(var item in rawList)
-                    {
-                        cmd.Parameters.Clear();
-                        var temp = (item.avgQTY * dict1[item.rm_id]) + dict2[item.rm_id];
-                        cmd.CommandText = "UPDATE raw_materials SET rol=@rol WHERE rm_id = @rmid";
-                        cmd.Parameters.AddWithValue("@rol", temp);
-                        cmd.Parameters.AddWithValue("@rmid", item.rm_id);
-                        cmd.ExecuteNonQuery();
-                    }
+                    cmd.Parameters.Clear();
+                    var temp = item.avgQTY * dict1[item.rm_id] + dict2[item.rm_id];
+                    cmd.CommandText = "UPDATE raw_materials SET rol=@rol WHERE rm_id = @rmid";
+                    cmd.Parameters.AddWithValue("@rol", temp);
+                    cmd.Parameters.AddWithValue("@rmid", item.rm_id);
+                    cmd.ExecuteNonQuery();
                 }
+            }
 
-                return View(RawMaterial);
+            ViewBag.temp = GetTemp();
+
+            return View(RawMaterial);
         }
 
         // DASHBOARD
@@ -132,7 +125,8 @@ namespace SRIMAK.Controllers
                 }
                 else if (x == 2)
                 {
-                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1 OR status = 3 ORDER BY " + pram1 + " " + pram2;
+                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1 OR status = 3 ORDER BY " + pram1 +
+                                      " " + pram2;
                 }
                 else if (x == 3)
                 {
@@ -142,7 +136,8 @@ namespace SRIMAK.Controllers
                 }
                 else
                 {
-                    cmd.CommandText = "SELECT * FROM raw_materials WHERE (qty<=rol OR request>0) AND status = 1 or status = 3";
+                    cmd.CommandText =
+                        "SELECT * FROM raw_materials WHERE (qty<=rol OR request>0) AND status = 1 or status = 3";
                 }
 
                 await using (var reader = await cmd.ExecuteReaderAsync())
@@ -303,7 +298,7 @@ namespace SRIMAK.Controllers
                 var cmd = DBConn.Connection.CreateCommand();
                 cmd.CommandText = "UPDATE raw_materials SET status = 0 WHERE rm_id = @rmid";
                 cmd.Parameters.AddWithValue("@rmid", id);
-                
+
                 var recs = cmd.ExecuteNonQuery();
 
                 cmd.CommandText = "DELETE FROM material_supplier WHERE rm_id = @rmid";
@@ -1968,23 +1963,25 @@ namespace SRIMAK.Controllers
         {
             var output = new List<PurchaseOrderModel>();
             var cmd = DBConn.Connection.CreateCommand();
-            cmd.CommandText = "SELECT purchase_order.po_id,purchase_order.sup_id,name,date,edd,purchase_order.status, SUM(material_purchase.cost*material_purchase.qty) FROM (purchase_order INNER JOIN supplier ON purchase_order.sup_id = supplier.sup_id) INNER JOIN material_purchase ON purchase_order.po_id = material_purchase.po_id GROUP BY purchase_order.po_id";
+            cmd.CommandText =
+                "SELECT purchase_order.po_id,purchase_order.sup_id,name,date,edd,purchase_order.status, SUM(material_purchase.cost*material_purchase.qty) FROM (purchase_order INNER JOIN supplier ON purchase_order.sup_id = supplier.sup_id) INNER JOIN material_purchase ON purchase_order.po_id = material_purchase.po_id GROUP BY purchase_order.po_id";
             await using (var reader = await cmd.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
                 {
-                    var temp = new PurchaseOrderModel()
+                    var temp = new PurchaseOrderModel
                     {
                         poid = reader.GetFieldValue<int>(0), sup = reader.GetFieldValue<int>(1),
-                        name = reader.GetFieldValue<string>(2), 
-                        Date = reader.GetFieldValue<DateTime>(3).ToString("d"), 
-                        EDD = reader.GetFieldValue<DateTime>(4).ToString("d"), 
-                        Status = reader.GetFieldValue<int>(5)==1 ? "Pending" : "Received", 
+                        name = reader.GetFieldValue<string>(2),
+                        Date = reader.GetFieldValue<DateTime>(3).ToString("d"),
+                        EDD = reader.GetFieldValue<DateTime>(4).ToString("d"),
+                        Status = reader.GetFieldValue<int>(5) == 1 ? "Pending" : "Received",
                         Cost = reader.GetFieldValue<decimal>(6)
-                    }; 
+                    };
                     output.Add(temp);
                 }
             }
+
             return View(output);
         }
 
@@ -1996,7 +1993,7 @@ namespace SRIMAK.Controllers
             ViewBag.Raw = tempRaw;
             ViewBag.Sup = tempSup;
             return View();
-        } 
+        }
 
         public async Task<ActionResult> CreateNewPurchaseOrderResult(IFormCollection collection)
         {
@@ -2017,14 +2014,16 @@ namespace SRIMAK.Controllers
                         if (item2.rawId == item.Id)
                         {
                             order.Add(new[] {item.Id, qty, item2.Cost, item2.lead});
-                            mailTable += "<tr> <td>"+ item.Id+"</td>" + "<td>" + item.Name + "</td>" + "<td>" + item2.Cost + "</td>" + "<td>" + qty + "</td>" + "<td>" + item2.Cost * qty + "</td> </tr>";
-                            lead = lead+((item2.lead / 1000) * qty);
+                            mailTable += "<tr> <td>" + item.Id + "</td>" + "<td>" + item.Name + "</td>" + "<td>" +
+                                         item2.Cost + "</td>" + "<td>" + qty + "</td>" + "<td>" + item2.Cost * qty +
+                                         "</td> </tr>";
+                            lead = lead + item2.lead / 1000 * qty;
                             total += item2.Cost * qty;
                             break;
                         }
             }
 
-            var edd = DateTime.Today.AddDays(Decimal.ToDouble(lead));
+            var edd = DateTime.Today.AddDays(decimal.ToDouble(lead));
             Console.WriteLine("Inserting PO...");
             cmd.CommandText = "INSERT INTO purchase_order(sup_id,edd) VALUES (@sup, @edd)";
             cmd.Parameters.AddWithValue("@sup", collection["supID"]);
@@ -2083,30 +2082,30 @@ namespace SRIMAK.Controllers
 
             try
             {
-                MimeMessage message = new MimeMessage();
-                MailboxAddress from = new MailboxAddress("SRIMAK","srimak101@gmail.com");
+                var message = new MimeMessage();
+                var from = new MailboxAddress("SRIMAK", "srimak101@gmail.com");
                 message.From.Add(from);
 
-                MailboxAddress to = new MailboxAddress("Test User 2","saubhagyaudani123@gmail.com");
+                var to = new MailboxAddress("Test User 2", "saubhagyaudani123@gmail.com");
                 message.To.Add(to);
 
                 message.Subject = "New Purchase Order " + poID;
 
-                BodyBuilder bb = new BodyBuilder();
+                var bb = new BodyBuilder();
                 bb.HtmlBody = "<h3>Purchase Order ID : " + poID + "</h3>" +
-                    "<table> <thead> <tr> " +
-                    "<th>ID</th> <th>Material</th> <th>Per Unit</th> <th>QTY</th> <th>Cost</th> " +
-                    "</tr> </thead>" +
-                    "<tbody>" + mailTable + "</tbody>" +
-                    "</table>" +
-                    "<h4>Total Cost : Rs." + total + "</h4>" +
-                    "<h4>Estimated Arrival Date : " + edd.ToString("D") + "</h4>";
+                              "<table> <thead> <tr> " +
+                              "<th>ID</th> <th>Material</th> <th>Per Unit</th> <th>QTY</th> <th>Cost</th> " +
+                              "</tr> </thead>" +
+                              "<tbody>" + mailTable + "</tbody>" +
+                              "</table>" +
+                              "<h4>Total Cost : Rs." + total + "</h4>" +
+                              "<h4>Estimated Arrival Date : " + edd.ToString("D") + "</h4>";
 
                 message.Body = bb.ToMessageBody();
 
-                SmtpClient client = new SmtpClient();
-                client.Connect("smtp.gmail.com",465 , true);
-                client.Authenticate("srimak101@gmail.com" , "sri123456789");
+                var client = new SmtpClient();
+                client.Connect("smtp.gmail.com", 465, true);
+                client.Authenticate("srimak101@gmail.com", "sri123456789");
                 client.Send(message);
                 client.Disconnect(true);
                 client.Dispose();
@@ -2130,11 +2129,13 @@ namespace SRIMAK.Controllers
             var cmd = DBConn.Connection.CreateCommand();
             if (id == 0)
             {
-                cmd.CommandText = "SELECT material_purchase.rm_id, name, cost, material_purchase.qty FROM material_purchase INNER JOIN raw_materials ON material_purchase.rm_id = raw_materials.rm_id WHERE po_id = (SELECT MAX(po_id) FROM purchase_order)";
+                cmd.CommandText =
+                    "SELECT material_purchase.rm_id, name, cost, material_purchase.qty FROM material_purchase INNER JOIN raw_materials ON material_purchase.rm_id = raw_materials.rm_id WHERE po_id = (SELECT MAX(po_id) FROM purchase_order)";
             }
             else
             {
-                cmd.CommandText = "SELECT material_purchase.rm_id, name, cost, material_purchase.qty FROM material_purchase INNER JOIN raw_materials ON material_purchase.rm_id = raw_materials.rm_id WHERE po_id = @poid";
+                cmd.CommandText =
+                    "SELECT material_purchase.rm_id, name, cost, material_purchase.qty FROM material_purchase INNER JOIN raw_materials ON material_purchase.rm_id = raw_materials.rm_id WHERE po_id = @poid";
                 cmd.Parameters.AddWithValue("@poid", id);
             }
 
@@ -2142,7 +2143,7 @@ namespace SRIMAK.Controllers
             {
                 while (await reader.ReadAsync())
                 {
-                    var temp = new PurchaseOrderMaterialsModel()
+                    var temp = new PurchaseOrderMaterialsModel
                     {
                         ID = reader.GetFieldValue<int>(0),
                         Name = reader.GetFieldValue<string>(1),
@@ -2157,10 +2158,9 @@ namespace SRIMAK.Controllers
             return View(poDetails);
         }
 
-        //add this to clerk controller
         public async Task<ActionResult> SetReceived(int id)
         {
-            List<int[]> matList = new List<int[]>();
+            var matList = new List<int[]>();
             var cmd = DBConn.Connection.CreateCommand();
 
             cmd.CommandText = "SELECT rm_id, qty FROM material_purchase WHERE po_id = @poid";
@@ -2168,9 +2168,7 @@ namespace SRIMAK.Controllers
             await using (var reader = await cmd.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
-                {
-                    matList.Add(new []{reader.GetFieldValue<int>(0) , reader.GetFieldValue<int>(1)});
-                }
+                    matList.Add(new[] {reader.GetFieldValue<int>(0), reader.GetFieldValue<int>(1)});
             }
 
             foreach (var item in matList)
@@ -2190,6 +2188,272 @@ namespace SRIMAK.Controllers
             TempData["Message"] = "Materials received";
             TempData["MsgType"] = "2";
             return RedirectToAction(nameof(PurchaseOrder));
+        }
+
+        //DAILY INDOOR TEST
+        public async Task<ActionResult> DailyIndoorTest()
+        {
+            var output = new List<DailyIndoorTestModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT test_code, tested_date, result FROM qulity_test WHERE type = 1 ORDER BY tested_date DESC";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new DailyIndoorTestModel
+                    {
+                        Code = reader.GetFieldValue<string>(0),
+                        Date = reader.GetFieldValue<DateTime>(1).ToString("yyyy MMMM dd"),
+                        Result = reader.GetFieldValue<int>(2)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            cmd.CommandText = "SELECT test_code FROM qulity_test WHERE DATE(tested_date) = CURDATE() AND type = 1";
+            var reader2 = cmd.ExecuteReader();
+
+            if (reader2.HasRows)
+                ViewBag.update = 1;
+            else
+                ViewBag.update = 0;
+
+            SetActiveNavbar(10);
+            return View(output);
+        }
+
+        public ActionResult CreateNewDailyIndoorTest()
+        {
+            ViewBag.code = "DIT" + DateTime.Now.ToString("yyMMdd");
+            return View();
+        }
+
+        public ActionResult CreateNewDailyIndoorTestResult(IFormCollection collection)
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "INSERT INTO qulity_test(test_code, result, ph_level, hardness, fe_comp, type) VALUES (@code, @result, @ph, @hard, @fe, 1)";
+            cmd.Parameters.AddWithValue("@code", "DIT" + DateTime.Now.ToString("yyMMdd"));
+            cmd.Parameters.AddWithValue("@result", collection["result"]);
+            cmd.Parameters.AddWithValue("@ph", collection["PH"]);
+            cmd.Parameters.AddWithValue("@hard", collection["Hardness"]);
+            cmd.Parameters.AddWithValue("@fe", collection["fe"]);
+            var recs = cmd.ExecuteNonQuery();
+
+            if (recs > 0)
+            {
+                TempData["Message"] = "Today's daily indoor test recorded";
+                TempData["MsgType"] = "2";
+                return RedirectToAction(nameof(DailyIndoorTest));
+            }
+
+            TempData["Message"] = "Couldn't record today's daily indoor test. Please try again";
+            TempData["MsgType"] = "4";
+            return RedirectToAction(nameof(CreateNewDailyIndoorTest));
+        }
+
+        public async Task<ActionResult> UpdateDailyIndoorTest()
+        {
+            var output = new DailyIndoorTestModel();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "SELECT ph_level,hardness,fe_comp FROM qulity_test WHERE test_code = @code";
+            cmd.Parameters.AddWithValue("@code", "DIT" + DateTime.Now.ToString("yyMMdd"));
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    output.PH = reader.GetFieldValue<double>(0);
+                    output.Hardness = reader.GetFieldValue<double>(1);
+                    output.fe = reader.GetFieldValue<double>(2);
+                }
+            }
+
+            return View(output);
+        }
+
+        public ActionResult UpdateDailyIndoorTestResult(IFormCollection collection)
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "UPDATE qulity_test SET result = @result, ph_level = @ph, hardness = @hard, fe_comp = @fe WHERE test_code = @code";
+            cmd.Parameters.AddWithValue("@code", "DIT" + DateTime.Now.ToString("yyMMdd"));
+            cmd.Parameters.AddWithValue("@result", collection["result"]);
+            cmd.Parameters.AddWithValue("@ph", collection["PH"]);
+            cmd.Parameters.AddWithValue("@hard", collection["Hardness"]);
+            cmd.Parameters.AddWithValue("@fe", collection["fe"]);
+
+            var recs = cmd.ExecuteNonQuery();
+
+            if (recs > 0)
+            {
+                TempData["Message"] = "Today's daily indoor test updated";
+                TempData["MsgType"] = "2";
+                return RedirectToAction(nameof(DailyIndoorTest));
+            }
+
+            TempData["Message"] = "Couldn't update today's daily indoor test. Please try again";
+            TempData["MsgType"] = "4";
+            return RedirectToAction(nameof(CreateNewDailyIndoorTest));
+        }
+
+        public async Task<ActionResult> ViewDailyIndoorTest(string id)
+        {
+            var output = new DailyIndoorTestModel();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT test_code, tested_date, result, ph_level, hardness, fe_comp FROM qulity_test WHERE test_code = @code";
+            cmd.Parameters.AddWithValue("@code", id);
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    output.Code = reader.GetFieldValue<string>(0);
+                    output.Date = reader.GetFieldValue<DateTime>(1).ToString("D");
+                    output.Result = reader.GetFieldValue<int>(2);
+                    output.PH = reader.GetFieldValue<double>(3);
+                    output.Hardness = reader.GetFieldValue<double>(4);
+                    output.fe = reader.GetFieldValue<double>(5);
+                }
+            }
+
+            return View(output);
+        }
+
+        //MONTHLY TEST
+        public async Task<ActionResult> MicroTest()
+        {
+            var output = new List<MicroTestModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "SELECT test_code, tested_date, result FROM qulity_test WHERE type = 2";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new MicroTestModel
+                    {
+                        Code = reader.GetFieldValue<string>(0),
+                        Date = reader.GetFieldValue<DateTime>(1).ToString("yyyy MMMM dd"),
+                        Result = reader.GetFieldValue<int>(2)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            cmd.CommandText =
+                "SELECT test_code FROM qulity_test WHERE MONTH(tested_date) = MONTH(CURRENT_DATE()) AND YEAR(tested_date) = YEAR(CURRENT_DATE()) AND type = 2";
+            var reader2 = cmd.ExecuteReader();
+
+            if (reader2.HasRows)
+                ViewBag.update = 1;
+            else
+                ViewBag.update = 0;
+
+            SetActiveNavbar(11);
+            return View(output);
+        }
+
+        public ActionResult CreateNewMicroTest()
+        {
+            ViewBag.code = "MBT" + DateTime.Now.ToString("yyMM");
+            return View();
+        }
+
+        public ActionResult CreateNewMicroTestResult(IFormCollection collection)
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "INSERT INTO qulity_test(test_code, result, ecoil_count, coilform_cnt_well, coilform_cnt_fnl, type) VALUES (@code, @result, @ecoli, @coliWell, @coliFnl, 2)";
+            cmd.Parameters.AddWithValue("@code", "MBT" + DateTime.Now.ToString("yyMM"));
+            cmd.Parameters.AddWithValue("@result", collection["result"]);
+            cmd.Parameters.AddWithValue("@ecoli", collection["ecoli"]);
+            cmd.Parameters.AddWithValue("@coliWell", collection["colWell"]);
+            cmd.Parameters.AddWithValue("@coliFnl", collection["colFinal"]);
+            var recs = cmd.ExecuteNonQuery();
+
+            if (recs > 0)
+            {
+                TempData["Message"] = "Current month's microbiology test recorded";
+                TempData["MsgType"] = "2";
+                return RedirectToAction(nameof(MicroTest));
+            }
+
+            TempData["Message"] = "Couldn't record current month's microbiology test. Please try again";
+            TempData["MsgType"] = "4";
+            return RedirectToAction(nameof(CreateNewMicroTest));
+        }
+
+        public async Task<ActionResult> UpdateMicroTest()
+        {
+            var output = new MicroTestModel();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT ecoil_count, coilform_cnt_well, coilform_cnt_fnl FROM qulity_test WHERE test_code = @code";
+            cmd.Parameters.AddWithValue("@code", "MBT" + DateTime.Now.ToString("yyMM"));
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    output.ecoli = reader.GetFieldValue<double>(0);
+                    output.colWell = reader.GetFieldValue<double>(1);
+                    output.colFinal = reader.GetFieldValue<double>(2);
+                }
+            }
+
+            return View(output);
+        }
+
+        public ActionResult UpdateMicroTestResult(IFormCollection collection)
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "UPDATE qulity_test SET result = @result, ecoil_count = @ecoli, coilform_cnt_well = @coliWell, coilform_cnt_fnl = @coliFnl WHERE test_code = @code";
+            cmd.Parameters.AddWithValue("@code", "MBT" + DateTime.Now.ToString("yyMM"));
+            cmd.Parameters.AddWithValue("@result", collection["result"]);
+            cmd.Parameters.AddWithValue("@ecoli", collection["ecoli"]);
+            cmd.Parameters.AddWithValue("@coliWell", collection["colWell"]);
+            cmd.Parameters.AddWithValue("@coliFnl", collection["colFinal"]);
+
+            var recs = cmd.ExecuteNonQuery();
+
+            if (recs > 0)
+            {
+                TempData["Message"] = "Current month's microbiology test updated";
+                TempData["MsgType"] = "2";
+                return RedirectToAction(nameof(MicroTest));
+            }
+
+            TempData["Message"] = "Couldn't update current month's microbiology test. Please try again";
+            TempData["MsgType"] = "4";
+            return RedirectToAction(nameof(CreateNewMicroTest));
+        }
+
+        public async Task<ActionResult> ViewMicroTest(string id)
+        {
+            var output = new MicroTestModel();
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT test_code, tested_date, result, ecoil_count, coilform_cnt_well, coilform_cnt_fnl FROM qulity_test WHERE test_code = @code";
+            cmd.Parameters.AddWithValue("@code", id);
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    output.Code = reader.GetFieldValue<string>(0);
+                    output.Date = reader.GetFieldValue<DateTime>(1).ToString("D");
+                    output.Result = reader.GetFieldValue<int>(2);
+                    output.ecoli = reader.GetFieldValue<double>(3);
+                    output.colWell = reader.GetFieldValue<double>(4);
+                    output.colFinal = reader.GetFieldValue<double>(5);
+                }
+            }
+
+            return View(output);
         }
 
         //MISC
@@ -2232,6 +2496,14 @@ namespace SRIMAK.Controllers
                 case 9:
                     ViewData["Clerk"] = "active";
                     break;
+
+                case 10:
+                    ViewData["Daily"] = "active";
+                    break;
+
+                case 11:
+                    ViewData["Monthly"] = "active";
+                    break;
             }
         }
 
@@ -2240,6 +2512,22 @@ namespace SRIMAK.Controllers
             if (HttpContext.Session.GetString("Name") != null)
                 return false;
             return false;
+        }
+
+        private int GetTemp()
+        {
+            //ARDUINO CODE
+            //CommunicatorModel comport = new CommunicatorModel();
+            //if (comport.connect(9600, "I'M ARDUINO", 4, 8, 16))
+            //{
+            //    return int.Parse(comport.message(4, 8, 32) + "C");
+            //}
+            //else
+            //{
+            //    return -1;
+            //}
+
+            return new Random().Next(20 , 40);
         }
     }
 }

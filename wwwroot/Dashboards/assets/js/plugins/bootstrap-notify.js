@@ -41,7 +41,7 @@
         position: null,
         type: "info",
         allow_dismiss: true,
-        allow_duplicates: true,
+        allow_duplicates: false,
         newest_on_top: false,
         showProgressbar: false,
         placement: {
@@ -133,6 +133,7 @@
             };
         }
 
+        this.settings.allow_duplicates = false;
         //if duplicate messages are not allowed, then only continue if this new message is not a duplicate of one that it already showing
         if (this.settings.allow_duplicates || (!this.settings.allow_duplicates && !isDuplicateNotification(this))) {
             this.init();

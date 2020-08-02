@@ -10,5 +10,6 @@ namespace SRIMAK.Models
         public string Name { get; set; }
         public int Production { get; set; }
         public int Wastage { get; set; }
+        
     }
 }

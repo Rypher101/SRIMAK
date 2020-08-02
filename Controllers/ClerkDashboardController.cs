@@ -1,9 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MimeKit;
 using SRIMAK.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Rotativa.AspNetCore;
 
 namespace SRIMAK.Controllers
 {
@@ -17,9 +20,27 @@ namespace SRIMAK.Controllers
         private DBConnection DBConn { get; }
 
         // GET: ClerkDashboard
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
-            return View();
+            var cmd = DBConn.Connection.CreateCommand();
+            var rawList = new List<FinishedProductModel>();
+            cmd.CommandText = "SELECT t2.rm_id, name, AVG(t2.qty) FROM (SELECT finished_product.rm_id, SUM(sales_product.qty) AS qty FROM (finished_product INNER JOIN sales_product ON finished_product.pro_id = sales_product.pro_id) INNER JOIN sales_order ON sales_order.so_id = sales_product.so_id WHERE sales_order.status = 3 AND (YEAR(sales_order.date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(sales_order.date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)) GROUP BY finished_product.rm_id, DATE(date)) AS t2 INNER JOIN raw_materials ON t2.rm_id = raw_materials.rm_id GROUP BY rm_id";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new FinishedProductModel()
+                    {
+                        rm_id = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        avgQTY = reader.GetFieldValue<decimal>(2)
+                    };
+
+                    rawList.Add(temp);
+                }
+            }
+
+            return View(rawList);
         }
 
         private async Task<List<RawMaterialModel>> GetRawMaterials(int x = 0, string pram1 = "rm_id",
@@ -103,7 +124,7 @@ namespace SRIMAK.Controllers
                     outputMonth.Add(temp);
                 }
             }
-            
+
             cmd.CommandText =
                 "SELECT daily_production.rm_id, name, SUM(prod), SUM(wast) FROM daily_production INNER JOIN raw_materials ON daily_production.rm_id=raw_materials.rm_id WHERE date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH) GROUP BY daily_production.rm_id";
             await using (var reader2 = await cmd.ExecuteReaderAsync())
@@ -263,7 +284,7 @@ namespace SRIMAK.Controllers
             if (ViewBag.status == 2)
             {
                 var tempDis = new List<DistributorModel>();
-                cmd.CommandText = "SELECT dis_id, name, vehi_type FROM distributor ORDER BY MOD(dis_id, (SELECT rout FROM sales_order INNER JOIN user ON sales_order.user_id=user.user_id WHERE so_id=@soid))";
+                cmd.CommandText = "SELECT dis_id, name, vehi_type FROM distributor";
                 await using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
@@ -279,7 +300,7 @@ namespace SRIMAK.Controllers
 
                 ViewBag.disList = tempDis;
             }
-            else if(ViewBag.status == 3)
+            else if (ViewBag.status == 3)
             {
                 var tempDis = new DistributorModel();
                 cmd.CommandText = "SELECT dis_id, name, email, contact, vehi_no, vehi_type, distributor.rout_no, town FROM distributor INNER JOIN rout ON distributor.rout_no=rout.rout_no WHERE dis_id=(SELECT dis_id FROM sales_order WHERE so_id=@soid)";
@@ -361,7 +382,7 @@ namespace SRIMAK.Controllers
             return RedirectToAction(nameof(SalesOrder));
         }
 
-        public ActionResult ViewSalesOrderDistributorResult(IFormCollection collection)
+        public async Task<ActionResult> ViewSalesOrderDistributorResult(IFormCollection collection)
         {
             if (TempData["soID"] == null)
             {
@@ -372,12 +393,96 @@ namespace SRIMAK.Controllers
 
             var cmd = DBConn.Connection.CreateCommand();
             cmd.CommandText = "UPDATE sales_order SET dis_id = @dis, status = 3 WHERE so_id = @soid";
-            cmd.Parameters.AddWithValue("@dis", collection["dis"]);
+            cmd.Parameters.AddWithValue("@dis", collection["disID"]);
             cmd.Parameters.AddWithValue("@soid", TempData["soID"]);
             var recs = cmd.ExecuteNonQuery();
 
             if (recs > 0)
             {
+                string mailTable = "";
+                cmd.CommandText =
+                    "SELECT sales_product.pro_id, name, IF(sales_product.new_qty > 0 , sales_product.new_qty , sales_product.qty) FROM sales_product INNER JOIN finished_product ON sales_product.pro_id = finished_product.pro_id WHERE so_id = @soid";
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        mailTable += "<tr><td>" + reader.GetFieldValue<int>(0) + "</td><td>" + reader.GetFieldValue<string>(1) + "</td><td>" + reader.GetFieldValue<int>(2) + "</td></tr>";
+                    }
+                }
+
+                cmd.CommandText = "SELECT due_date FROM sales_order WHERE so_id = @soid";
+                DateTime dueDate =(DateTime) cmd.ExecuteScalar();
+
+                var disEamail = "";
+                var disName = "";
+
+                cmd.CommandText = "SELECT name, email FROM distributor WHERE dis_id = @dis";
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        disName = reader.GetFieldValue<string>(0);
+                        disEamail = reader.GetFieldValue<string>(1);
+                    }
+                }
+
+                var reName = "";
+                var reAddr = "";
+                var reContact = "";
+
+                cmd.CommandText =
+                    "SELECT name, contact_number, address FROm user WHERE user_id = (SELECT user_id FROM sales_order WHERE so_id = @soid)";
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        reName = reader.GetFieldValue<string>(0);
+                        reAddr = reader.GetFieldValue<string>(2);
+                        reContact = reader.GetFieldValue<string>(1);
+                    }
+                }
+
+                try
+                {
+                    MimeMessage message = new MimeMessage();
+                    MailboxAddress from = new MailboxAddress("SRIMAK", "srimak101@gmail.com");
+                    message.From.Add(from);
+
+                    MailboxAddress to = new MailboxAddress(disName, disEamail);
+                    message.To.Add(to);
+
+                    message.Subject = "New Sales Order " + TempData["soID"];
+
+                    BodyBuilder bb = new BodyBuilder();
+                    bb.HtmlBody = "<h3>Sales Order ID : " + TempData["soID"] + "</h3>" +
+                                  "<br>" +
+                                  "<h4>Reseller Name : " + reName + "</h4>" +
+                                  "<h4>Reseller Contact No : " + reAddr + "</h4>" +
+                                  "<h4>Reseller Address : " + reContact + "</h4>" +
+                                  "<table> <thead> <tr> " +
+                                  "<th>ID</th> <th>Product</th> <th>QTY</th>" +
+                                  "</tr> </thead>" +
+                                  "<tbody>" + mailTable + "</tbody>" +
+                                  "</table>" +
+                                  "<h4>Due Date : " + dueDate.ToString("D") + "</h4>";
+
+                    message.Body = bb.ToMessageBody();
+
+                    SmtpClient client = new SmtpClient();
+                    client.Connect("smtp.gmail.com", 465, true);
+                    client.Authenticate("srimak101@gmail.com", "sri123456789");
+                    client.Send(message);
+                    client.Disconnect(true);
+                    client.Dispose();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    TempData["Message"] = "Distributor assigned but couldn't send mail to the distributor!";
+                    TempData["MsgType"] = "4";
+                    return RedirectToAction("ViewSalesOrder", new { id = TempData["soID"] });
+                }
+
                 TempData["Message"] = "Distributor assigned!";
                 TempData["MsgType"] = "2";
                 return RedirectToAction(nameof(SalesOrder));
@@ -390,5 +495,59 @@ namespace SRIMAK.Controllers
             }
         }
 
+        public async Task<ActionResult> CreateSalesOrderPDF(int id)
+        {
+            var output = new List<FinishedProductModel>();
+            decimal totalCost = 0;
+            int totalItems = 0;
+
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT sales_product.pro_id, name, IF(sales_product.new_qty > 0 , sales_product.new_qty , sales_product.qty), cost FROM sales_product INNER JOIN finished_product ON sales_product.pro_id = finished_product.pro_id WHERE so_id = @soid";
+            cmd.Parameters.AddWithValue("@soid", id);
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new FinishedProductModel()
+                    {
+                        pro_id = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        QTY = reader.GetFieldValue<int>(2)
+                    };
+
+                    totalItems += reader.GetFieldValue<int>(2);
+                    totalCost += (reader.GetFieldValue<int>(2)*reader.GetFieldValue<decimal>(3));
+                    output.Add(temp);
+                }
+            }
+
+            cmd.CommandText = "SELECT name, contact_number, address, email FROM user WHERE user_id = (SELECT user_id FROM sales_order WHERE so_id = @soid)";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    ViewData["resellerName"] = reader.GetFieldValue<string>(0);
+                    ViewData["resellerContact"] = reader.GetFieldValue<string>(1);
+                    ViewData["resellerAddress"] = reader.GetFieldValue<string>(2);
+                    ViewData["resellerEmail"] = reader.GetFieldValue<string>(3);
+                }
+            }
+
+            ViewData["Title"] = "Sales Order : " + id;
+            ViewData["so"] = id;
+            ViewData["totalItems"] = totalItems;
+            ViewData["totalCost"] = totalCost;
+
+            return new ViewAsPdf("CreateSalesOrderPDF", output, ViewData);
+        }
+
+        public IActionResult DownloadSalesOrderPDF(int soid)
+        {
+            var report = new ViewAsPdf("CreateSalesOrderPDF", new{id = soid});
+            return report;
+        }
+
     }
-}   
+}

@@ -1,0 +1,125 @@
+﻿@model SRIMAK.Models.MicroTestModel
+
+@{
+    ViewData["Title"] = "UpdateMicroTest";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Monthly Microbiology Test</h4>
+            </div>
+            <div class="card-body">
+                <hr />
+                <div class="row">
+                    <div class="col-md-4 offset-4">
+                        <form asp-action="UpdateMicroTestResult" id="monthlyForm">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <label asp-for="ecoli" class="control-label"></label>
+                                <input asp-for="ecoli" class="form-control" type="number" onkeyup="eColi()" onchange="eColi()" onfocusout="ecoliFoc()" />
+                                <span asp-validation-for="ecoli" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="colWell" class="control-label"></label>
+                                <input asp-for="colWell" class="form-control" type="number" onkeyup="coliWell()" onchange="coliWell()" onfocusout="coliWellFoc()" />
+                                <span asp-validation-for="colWell" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="colFinal" class="control-label"></label>
+                                <input asp-for="colFinal" class="form-control" type="number" onkeyup="coliFnl()" onchange="coliFnl()" onfocusout="coliFnlFoc()" />
+                                <span asp-validation-for="colFinal" class="text-danger"></span>
+                            </div>
+                            <div class="offset-9">
+                                <input type="button" value="Update" class="btn btn-primary" onclick="submitForm()" />
+                            </div>
+                            <input type="hidden" id="result" name="result" />
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var ecV = false;
+    var cwV = false;
+    var cfV = false;
+
+    function eColi() {
+        if (document.getElementById("ecoli").value == 0) {
+            document.getElementById("ecoli").style.backgroundColor = "";
+            ecV = true;
+        } else {
+            document.getElementById("ecoli").style.backgroundColor = "lightpink";
+            demo.showNotification("E. Coli bacteria count should be 0", "4");
+            ecV = false;
+        }
+    }
+
+    function ecoliFoc() {
+        if (document.getElementById("ecoli").value == "") {
+            document.getElementById("ecoli").value = 0;
+        }
+        eColi();
+    }
+
+    function coliWell() {
+        if (document.getElementById("colWell").value < 15) {
+            document.getElementById("colWell").style.backgroundColor = "";
+            cwV = true;
+        } else {
+            document.getElementById("colWell").style.backgroundColor = "lightpink";
+            demo.showNotification("Coliform bacteria at well should be less than 15", "4");
+            cwV = false;
+        }
+    }
+
+    function coliWellFoc() {
+        if (document.getElementById("colWell").value == "") {
+            document.getElementById("colWell").value = 0;
+        }
+        coliWell();
+    }
+
+    function coliFnl() {
+        if (document.getElementById("colFinal").value == 0) {
+            document.getElementById("colFinal").style.backgroundColor = "";
+            cfV = true;
+        } else {
+            document.getElementById("colFinal").style.backgroundColor = "lightpink";
+            demo.showNotification("Final coliform bacteria count should be 0", "4");
+            cfV = false;
+        }
+    }
+
+    function coliFnlFoc() {
+        if (document.getElementById("colFinal").value == "") {
+            document.getElementById("colFinal").value = 0;
+        }
+        coliFnl();
+    }
+
+    function submitForm() {
+        coliFnlFoc();
+        coliWellFoc();
+        ecoliFoc();
+
+        if (ecV && cwV && cfV) {
+            document.getElementById("result").value = 1;
+        } else {
+            document.getElementById("result").value = 0;
+        }
+
+        document.getElementById("monthlyForm").submit();
+    }
+
+    window.onload = function () {
+        coliFnlFoc();
+        coliWellFoc();
+        ecoliFoc();
+    }
+</script>

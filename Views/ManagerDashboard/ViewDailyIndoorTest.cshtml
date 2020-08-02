@@ -1,0 +1,71 @@
+﻿@model SRIMAK.Models.DailyIndoorTestModel
+
+@{
+    ViewData["Title"] = "ViewDailyIndoorTest";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Daily Indoor Test Result</h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div>
+                    <hr />
+                    <div class="col-md-6 offset-3">
+                        <dl class="row">
+                            <dt class="col-md-4">
+                                @Html.DisplayNameFor(model => model.Code)
+                            </dt>
+                            <dd class="col-md-6">
+                                @Html.DisplayFor(model => model.Code)
+                            </dd>
+                            <dt class="col-md-4">
+                                @Html.DisplayNameFor(model => model.Date)
+                            </dt>
+                            <dd class="col-md-6">
+                                @Html.DisplayFor(model => model.Date)
+                            </dd>
+                            <dt class="col-md-4">
+                                @Html.DisplayNameFor(model => model.PH)
+                            </dt>
+                            <dd class="col-md-6">
+                                @Html.DisplayFor(model => model.PH)
+                            </dd>
+                            <dt class="col-md-4">
+                                @Html.DisplayNameFor(model => model.Hardness)
+                            </dt>
+                            <dd class="col-md-6">
+                                @Html.DisplayFor(model => model.Hardness)
+                            </dd>
+                            <dt class="col-md-4">
+                                @Html.DisplayNameFor(model => model.fe)
+                            </dt>
+                            <dd class="col-md-6">
+                                @Html.DisplayFor(model => model.fe)
+                            </dd>
+                            <dt class="col-md-4">
+                                @Html.DisplayNameFor(model => model.Result)
+                            </dt>
+                            <dd class="col-md-6">
+                                @if (Model.Result == 1)
+                                {
+                                    <p>Pass</p>
+                                }
+                                else
+                                {
+                                    <p>Fail</p>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

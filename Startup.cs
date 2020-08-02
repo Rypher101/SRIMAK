@@ -9,7 +9,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Rotativa.AspNetCore;
 using SRIMAK.Models;
+using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace SRIMAK
 {
@@ -41,7 +43,7 @@ namespace SRIMAK
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostingEnvironment env2)
         {
             if (env.IsDevelopment())
             {
@@ -68,6 +70,8 @@ namespace SRIMAK
                     name: "default",
                     pattern: "{controller=Login}/{action=Index}/{id?}");
             });
+
+            RotativaConfiguration.Setup(env2);
         }
     }
 }

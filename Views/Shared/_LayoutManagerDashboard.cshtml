@@ -94,6 +94,20 @@
                             <p>Purchase Order</p>
                         </a>
                     </li>
+                    <li class="nav-item @ViewData["Daily"]">
+
+                        <a class="nav-link " href="@Url.Action("DailyIndoorTest","ManagerDashboard")">
+                            <i class="nc-icon nc-tag-content"></i>
+                            <p>Daily Indoor Test</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Micro"]">
+
+                        <a class="nav-link " href="@Url.Action("MicroTest","ManagerDashboard")">
+                            <i class="nc-icon nc-atom"></i>
+                            <p>Microbiology Test</p>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
