@@ -2456,6 +2456,71 @@ namespace SRIMAK.Controllers
             return View(output);
         }
 
+        //Reports
+        public async Task<ActionResult> Reports()
+        {
+            var dailyProductionList = new List<DailyProductionModel>();
+            var salesList = new List<FinishedProductModel>();
+            var dalilyIndoorList = new List<DailyIndoorTestModel>();
+
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText =
+                "SELECT name, SUM(prod) AS Prod, SUM(wast) AS Wast FROM daily_production INNER JOIN finished_product ON daily_production.rm_id = finished_product.rm_id WHERE YEAR(date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) GROUP BY name";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new DailyProductionModel()
+                    {
+                        Name = reader.GetFieldValue<string>(0),
+                        Production = Convert.ToInt16(reader.GetFieldValue<decimal>(1)),
+                        Wastage = Convert.ToInt16(reader.GetFieldValue<decimal>(2))
+                    };
+
+                    dailyProductionList.Add(temp);
+                }
+            }
+
+            cmd.CommandText =
+                "SELECT name, SUM(lst_qty) AS qty FROM ((SELECT pro_id, IF(new_qty>0, new_qty, qty) AS lst_qty, so_id FROM sales_product) AS Temp INNER JOIN finished_product ON Temp.pro_id = finished_product.pro_id) INNER JOIN sales_order ON sales_order.so_id = Temp.so_id WHERE YEAR(date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) GROUP BY name";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new FinishedProductModel()
+                    {
+                        Name = reader.GetFieldValue<string>(0),
+                        QTY = Convert.ToInt16(reader.GetFieldValue<decimal>(1))
+                    };
+
+                    salesList.Add(temp);
+                }
+            }
+
+            cmd.CommandText = "SELECT tested_date, ph_level, hardness, fe_comp FROM qulity_test WHERE YEAR(tested_date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(tested_date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) AND type = 1 ORDER BY tested_date";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new DailyIndoorTestModel()
+                    {
+                        Code = "DIT" + reader.GetFieldValue<DateTime>(0).ToString("yyMMdd"),
+                        PH = reader.GetFieldValue<double>(1),
+                        Hardness = reader.GetFieldValue<double>(2),
+                        fe = reader.GetFieldValue<double>(3)
+                    };
+
+                    dalilyIndoorList.Add(temp);
+                }
+            }
+
+            ViewBag.Qulity = dalilyIndoorList;
+            ViewBag.Production = dailyProductionList;
+            ViewBag.Sales = salesList;
+            SetActiveNavbar(12);
+            return View();
+        }
+
         //MISC
         private void SetActiveNavbar(int x)
         {
@@ -2503,6 +2568,10 @@ namespace SRIMAK.Controllers
 
                 case 11:
                     ViewData["Monthly"] = "active";
+                    break;
+
+                case 12:
+                    ViewData["Report"] = "active";
                     break;
             }
         }

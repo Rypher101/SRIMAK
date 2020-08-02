@@ -1,0 +1,301 @@
+﻿@using Newtonsoft.Json
+
+@{
+    ViewData["Title"] = "Reports";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Production Report</h4>
+            </div>
+            <div class="card-body">
+                <hr />
+                <div class="row">
+                    <div id="chartContainerProduction" style="height: 370px; width: 900px; margin: 0px auto 0px 100px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Sales Report</h4>
+            </div>
+            <div class="card-body">
+                <hr />
+                <div class="row">
+                    <div id="chartContainerSales" style="height: 370px; width: 900px; margin: 0px auto 0px 100px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <h4 class="card-title">Qulity Report</h4>
+            </div>
+            <div class="card-body">
+                <hr />
+                <div class="row">
+                    <div id="chartContainerQulityPh" style="height: 370px; width: 900px; margin: 0px auto 0px 100px;"></div>
+                    <div id="chartContainerQulityHard" style="height: 370px; width: 900px; margin: 0px auto 0px 100px;"></div>
+                    <div id="chartContainerQulityFe" style="height: 370px; width: 900px; margin: 0px auto 0px 100px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/Dashboards/assets/js/canvasjs.min.js"></script>
+
+<script type="text/javascript">
+    function Generate() {
+        var supObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Production) as string);
+    }
+
+    window.onload = function () {
+        var productionObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Production) as string);
+        var salesObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Sales) as string);
+        var qulityObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Qulity) as string);
+
+        var dataProduction = [{}];
+        var dataWastage = [{}];
+        var dataSales = [{}];
+        var dataQulityPh = [{}];
+        var dataQulityHard = [{}];
+        var dataQulityFe = [{}];
+
+        for (var i = 0; i < productionObj.length; i++) {
+            if (i==0) {
+                dataProduction = [{ label: productionObj[i].Name, y: productionObj[i].Production }];
+                dataWastage = [{ label: productionObj[i].Name, y: productionObj[i].Wastage }];
+                continue;
+            }
+            dataProduction.push({ label: productionObj[i].Name, y: productionObj[i].Production });
+            dataWastage.push({ label: productionObj[i].Name, y: productionObj[i].Wastage });
+        }
+
+        for (var i = 0; i < salesObj.length; i++) {
+            if (i == 0) {
+                dataSales = [{ label: salesObj[i].Name, y: salesObj[i].QTY }];
+                continue;
+            }
+            dataSales.push({ label: salesObj[i].Name, y: salesObj[i].QTY });
+        }
+
+        for (var i = 0; i < qulityObj.length; i++) {
+            if (i == 0) {
+                dataQulityPh = [{ label: qulityObj[i].Code, y: qulityObj[i].PH }];
+                dataQulityHard = [{ label: qulityObj[i].Code, y: qulityObj[i].Hardness }];
+                dataQulityFe = [{ label: qulityObj[i].Code, y: qulityObj[i].fe }];
+                continue;
+            }
+            dataQulityPh.push({ label: qulityObj[i].Code, y: qulityObj[i].PH });
+            dataQulityHard.push({ label: qulityObj[i].Code, y: qulityObj[i].Hardness });
+            dataQulityFe.push({ label: qulityObj[i].Code, y: qulityObj[i].fe });
+        }
+
+        var chartProduction = new CanvasJS.Chart("chartContainerProduction", {
+            exportEnabled: true,
+            animationEnabled: true,
+            title:{
+                text: "Previous Month Production and Wastage"
+            },
+            subtitles: [{
+                text: "Click Legend to Hide or Unhide Data Series"
+            }],
+            axisX: {
+                title: "Item",
+                includeZero: false
+            },
+            axisY: {
+                title: "Production & Wastage",
+                gridDashType: "shortDot",
+                titleFontColor: "#4F81BC",
+                lineColor: "#4F81BC",
+                labelFontColor: "#4F81BC",
+                tickColor: "#4F81BC",
+                includeZero: true
+            },
+
+            toolTip: {
+                shared: true
+            },
+
+            legend: {
+                cursor: "pointer",
+                itemclick: toggleDataSeries
+            },
+            data: [{
+                    type: "column",
+                    name: "Production",
+                    showInLegend: true,
+                    yValueFormatString: "# Items",
+                    dataPoints: dataProduction
+                },
+                {
+                    type: "column",
+                    name: "Wastage",
+                    axisYType: "primary",
+                    showInLegend: true,
+                    yValueFormatString: "# Items",
+                    dataPoints: dataWastage
+                }]
+        });
+
+        var chartSales = new CanvasJS.Chart("chartContainerSales", {
+            exportEnabled: true,
+            animationEnabled: true,
+            title: {
+                text: "Previous Month Sales"
+            },
+            axisX: {
+                title: "Item",
+                includeZero: false
+            },
+            axisY: {
+                title: "Sales",
+                gridDashType: "shortDot",
+                titleFontColor: "#4F81BC",
+                lineColor: "#4F81BC",
+                labelFontColor: "#4F81BC",
+                tickColor: "#4F81BC",
+                includeZero: true
+            },
+
+            toolTip: {
+                shared: true
+            },
+
+            legend: {
+                cursor: "pointer",
+            },
+            data: [{
+                type: "column",
+                name: "Production",
+                showInLegend: true,
+                yValueFormatString: "# Items",
+                dataPoints: dataSales
+            }]
+        });
+
+        var chartQulityPh = new CanvasJS.Chart("chartContainerQulityPh", {
+            animationEnabled: true,
+            title:{
+                text: "Previous Month Water PH Level Distribution"
+            },
+            axisX: {
+                title: "Test Code",
+                crosshair: {
+                    enabled: true,
+                    snapToDataPoint: true
+                }
+            },
+            axisY: {
+                title: "PH Level",
+                gridDashType: "shortDot",
+                valueFormatString: "##0.00",
+                crosshair: {
+                    enabled: true,
+                    snapToDataPoint: true,
+                    labelFormatter: function(e) {
+                        return CanvasJS.formatNumber(e.value, "##0.00");
+                    }
+                }
+            },
+            data: [{
+                type: "area",
+                yValueFormatString: "##0.00",
+                dataPoints: dataQulityPh
+            }]
+        });
+
+        var chartQulityHard = new CanvasJS.Chart("chartContainerQulityHard", {
+            animationEnabled: true,
+            title:{
+                text: "Previous Month Water Hardness Distribution"
+            },
+            axisX: {
+                title: "Test Code",
+                crosshair: {
+                    enabled: true,
+                    snapToDataPoint: true
+                }
+            },
+            axisY: {
+                title: "Hardness",
+                gridDashType: "shortDot",
+                valueFormatString: "##0.00",
+                crosshair: {
+                    enabled: true,
+                    snapToDataPoint: true,
+                    labelFormatter: function(e) {
+                        return CanvasJS.formatNumber(e.value, "##0.00");
+                    }
+                }
+            },
+            data: [{
+                type: "area",
+                yValueFormatString: "##0.00",
+                dataPoints: dataQulityHard
+            }]
+        });
+
+        var chartQulityFe = new CanvasJS.Chart("chartContainerQulityFe", {
+            animationEnabled: true,
+            title:{
+                text: "Previous Month Water Fe. Composition Distribution"
+            },
+            axisX: {
+                title: "Test Code",
+                crosshair: {
+                    enabled: true,
+                    snapToDataPoint: true
+                }
+            },
+            axisY: {
+                title: "Fe Composotion",
+                gridDashType: "shortDot",
+                valueFormatString: "##0.00",
+                crosshair: {
+                    enabled: true,
+                    snapToDataPoint: true,
+                    labelFormatter: function(e) {
+                        return CanvasJS.formatNumber(e.value, "##0.00");
+                    }
+                }
+            },
+            data: [{
+                type: "area",
+                yValueFormatString: "##0.00",
+                dataPoints: dataQulityFe
+            }]
+        });
+
+        chartProduction.render();
+        chartSales.render();
+        chartQulityPh.render();
+        chartQulityHard.render();
+        chartQulityFe.render();
+
+        function toggleDataSeries(e) {
+            if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                e.dataSeries.visible = false;
+            } else {
+                e.dataSeries.visible = true;
+            }
+            e.chart.render();
+        }
+
+    }
+</script>
+        
