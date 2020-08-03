@@ -103,7 +103,7 @@ namespace SRIMAK.Controllers
             // Get the hashed string.  
             var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
             // Print the string.   
-            Console.WriteLine(hash);
+            //Console.WriteLine(hash);
             return hash;
 
         }

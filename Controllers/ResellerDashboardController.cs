@@ -414,7 +414,6 @@ namespace SRIMAK.Controllers
             using var sha256 = HashAlgorithm.Create("sha256");
             var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
             var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
-            Console.WriteLine(hash);
             return hash;
         }
     }

@@ -58,14 +58,12 @@
 <script src="~/Dashboards/assets/js/canvasjs.min.js"></script>
 
 <script type="text/javascript">
-    function Generate() {
-        var supObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Production) as string);
-    }
-
     window.onload = function () {
         var productionObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Production) as string);
         var salesObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Sales) as string);
         var qulityObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Qulity) as string);
+
+        var prvMonth = "@ViewBag.prvMonth";
 
         var dataProduction = [{}];
         var dataWastage = [{}];
@@ -108,7 +106,7 @@
             exportEnabled: true,
             animationEnabled: true,
             title:{
-                text: "Previous Month Production and Wastage"
+                text: prvMonth + " Production and Wastage"
             },
             subtitles: [{
                 text: "Click Legend to Hide or Unhide Data Series"
@@ -118,7 +116,7 @@
                 includeZero: false
             },
             axisY: {
-                title: "Production & Wastage",
+                title: "Production",
                 gridDashType: "shortDot",
                 titleFontColor: "#4F81BC",
                 lineColor: "#4F81BC",
@@ -126,7 +124,14 @@
                 tickColor: "#4F81BC",
                 includeZero: true
             },
-
+            //axisY2: {
+            //    title: "Wastage",
+            //    titleFontColor: "#C0504E",
+            //    lineColor: "#C0504E",
+            //    labelFontColor: "#C0504E",
+            //    tickColor: "#C0504E",
+            //    includeZero: true
+            //},
             toolTip: {
                 shared: true
             },
@@ -145,7 +150,7 @@
                 {
                     type: "column",
                     name: "Wastage",
-                    axisYType: "primary",
+                    axisYType: "primary", //change to secondary to use axisY2
                     showInLegend: true,
                     yValueFormatString: "# Items",
                     dataPoints: dataWastage
@@ -156,7 +161,7 @@
             exportEnabled: true,
             animationEnabled: true,
             title: {
-                text: "Previous Month Sales"
+                text: prvMonth + " Sales"
             },
             axisX: {
                 title: "Item",
@@ -189,9 +194,10 @@
         });
 
         var chartQulityPh = new CanvasJS.Chart("chartContainerQulityPh", {
+            exportEnabled: true,
             animationEnabled: true,
             title:{
-                text: "Previous Month Water PH Level Distribution"
+                text: prvMonth + " Water PH Level Distribution"
             },
             axisX: {
                 title: "Test Code",
@@ -213,16 +219,17 @@
                 }
             },
             data: [{
-                type: "area",
+                type: "line",
                 yValueFormatString: "##0.00",
                 dataPoints: dataQulityPh
             }]
         });
 
         var chartQulityHard = new CanvasJS.Chart("chartContainerQulityHard", {
+            exportEnabled: true,
             animationEnabled: true,
             title:{
-                text: "Previous Month Water Hardness Distribution"
+                text: prvMonth + " Water Hardness Distribution"
             },
             axisX: {
                 title: "Test Code",
@@ -244,16 +251,17 @@
                 }
             },
             data: [{
-                type: "area",
+                type: "line",
                 yValueFormatString: "##0.00",
                 dataPoints: dataQulityHard
             }]
         });
 
         var chartQulityFe = new CanvasJS.Chart("chartContainerQulityFe", {
+            exportEnabled: true,
             animationEnabled: true,
             title:{
-                text: "Previous Month Water Fe. Composition Distribution"
+                text: prvMonth + " Water Fe. Composition Distribution"
             },
             axisX: {
                 title: "Test Code",
@@ -275,7 +283,7 @@
                 }
             },
             data: [{
-                type: "area",
+                type: "line",
                 yValueFormatString: "##0.00",
                 dataPoints: dataQulityFe
             }]

@@ -2514,6 +2514,7 @@ namespace SRIMAK.Controllers
                 }
             }
 
+            ViewBag.prvMonth = DateTime.Now.AddMonths(-1).ToString("yyyy MMMM");
             ViewBag.Qulity = dalilyIndoorList;
             ViewBag.Production = dailyProductionList;
             ViewBag.Sales = salesList;
