@@ -45,6 +45,43 @@
                             <p>Dashboard</p>
                         </a>
                     </li>
+                    <li class="nav-item @ViewData["Sales"]">
+                        <a class="nav-link " href="@Url.Action("SalesOrder","ManagerDashboard")">
+                            <i class="nc-icon nc-notes"></i>
+                            <p>Sales Order</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Consumption"]">
+                        <a class="nav-link " href="@Url.Action("Consumption","ManagerDashboard")">
+                            <i class="nc-icon nc-chart-pie-36"></i>
+                            <p>Daily Consumption</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Daily"]">
+                        <a class="nav-link " href="@Url.Action("DailyIndoorTest","ManagerDashboard")">
+                            <i class="nc-icon nc-tag-content"></i>
+                            <p>Daily Indoor Test</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Micro"]">
+
+                        <a class="nav-link " href="@Url.Action("MicroTest","ManagerDashboard")">
+                            <i class="nc-icon nc-atom"></i>
+                            <p>Microbiology Test</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Reports"]">
+                        <a class="nav-link " href="@Url.Action("Reports","ManagerDashboard")">
+                            <i class="nc-icon nc-chart-bar-32"></i>
+                            <p>Reports</p>
+                        </a>
+                    </li>
+                    <li class="nav-item @ViewData["Purchase"]">
+                        <a class="nav-link " href="@Url.Action("PurchaseOrder","ManagerDashboard")">
+                            <i class="nc-icon nc-notes"></i>
+                            <p>Purchase Order</p>
+                        </a>
+                    </li>
                     <li class="nav-item @ViewData["Materials"]">
                         <a class="nav-link " href="@Url.Action("Materials","ManagerDashboard")">
                             <i class="nc-icon nc-grid-45"></i>
@@ -75,7 +112,7 @@
                             <p>Suppliers</p>
                         </a>
                     </li>
-                    <li class="nav-item @ViewData["Distributors"]">
+                    <li class="nav-item @ViewData["Distributor"]">
                         <a class="nav-link " href="@Url.Action("Distributor","ManagerDashboard")">
                             <i class="nc-icon nc-delivery-fast"></i>
                             <p>Distributors</p>
@@ -85,34 +122,6 @@
                         <a class="nav-link " href="@Url.Action("Rout","ManagerDashboard")">
                             <i class="nc-icon nc-square-pin"></i>
                             <p>Rout</p>
-                        </a>
-                    </li>
-                    <li class="nav-item @ViewData["Purchase"]">
-
-                        <a class="nav-link " href="@Url.Action("PurchaseOrder","ManagerDashboard")">
-                            <i class="nc-icon nc-notes"></i>
-                            <p>Purchase Order</p>
-                        </a>
-                    </li>
-                    <li class="nav-item @ViewData["Daily"]">
-
-                        <a class="nav-link " href="@Url.Action("DailyIndoorTest","ManagerDashboard")">
-                            <i class="nc-icon nc-tag-content"></i>
-                            <p>Daily Indoor Test</p>
-                        </a>
-                    </li>
-                    <li class="nav-item @ViewData["Micro"]">
-
-                        <a class="nav-link " href="@Url.Action("MicroTest","ManagerDashboard")">
-                            <i class="nc-icon nc-atom"></i>
-                            <p>Microbiology Test</p>
-                        </a>
-                    </li>
-                    <li class="nav-item @ViewData["Reports"]">
-
-                        <a class="nav-link " href="@Url.Action("Reports","ManagerDashboard")">
-                            <i class="nc-icon nc-chart-bar-32"></i>
-                            <p>Reports</p>
                         </a>
                     </li>
                 </ul>
@@ -139,24 +148,6 @@
                             </li>
                         </ul>
                         <ul class="navbar-nav ml-auto">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#pablo">
-                                    <span class="no-icon">Account</span>
-                                </a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <span class="no-icon">Dropdown</span>
-                                </a>
-                                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                                    <a class="dropdown-item" href="#">Action</a>
-                                    <a class="dropdown-item" href="#">Another action</a>
-                                    <a class="dropdown-item" href="#">Something</a>
-                                    <a class="dropdown-item" href="#">Something else here</a>
-                                    <div class="divider"></div>
-                                    <a class="dropdown-item" href="#">Separated link</a>
-                                </div>
-                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="@Url.Action("Logout","Login")">
                                     <span class="no-icon">Log out</span>

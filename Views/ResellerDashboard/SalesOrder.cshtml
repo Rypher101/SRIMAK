@@ -68,6 +68,10 @@
                                         case 3:
                                             stat = "Assigned to a distributor";
                                             break;
+
+                                        case 4:
+                                            stat = "Payment Received";
+                                            break;
                                     }
                                 }
                                 @stat
@@ -76,8 +80,9 @@
                                 @if (item.Status == 3)
                                 {
                                     <a rel="tooltip" title="Distributor Details" class="btn btn-simple btn-success btn-link" href="@Url.Action("ViewDistributor", "ResellerDashboard", new {id = item.disID})" role="button"><i class="fa fa-edit"></i></a>
+                                    <a rel="tooltip" title="Mark as received" class="btn btn-success btn-simple btn-link" href="@Url.Action("MarkAsReceived", "ResellerDashboard", new {id = item.soID})" role="button"><i class="fa fa-check"></i></a>
                                 }
-                               
+
                                 @if (item.Status == 1)
                                 {
                                     <a rel="tooltip" title="Remove Order" class="btn btn-danger btn-simple btn-link" href="@Url.Action("DeleteSalesOrderResult", "ResellerDashboard", new {id = item.soID})" role="button" onclick="return confirm('Are sure wants to delete?');"><i class="fa fa-times"></i></a>

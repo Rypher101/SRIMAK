@@ -60,7 +60,7 @@
             </td>
             <td>
                 @{
-                    var status = item.Status == 1 ? "Pending" : item.Status == 2 ? "Accepted" : "Assigned to distributor";
+                    var status = item.Status == 1 ? "Pending" : item.Status == 2 ? "Accepted" : item.Status == 3 ? "Assigned to distributor" : "Payment Received";
                 }
                 
                 @status
@@ -68,12 +68,12 @@
             <td class="td-actions text-right">
                 <a rel="tooltip" title="View" class="btn btn-info btn-simple btn-link" href="@Url.Action("ViewSalesOrder","ClerkDashboard", new {id = item.soID})" role="button"><i class="fa fa-edit"></i></a>
                 @{
-                    if (item.Status == 3)
+                    if (item.Status > 2)
                     {
-                        <a rel="tooltip" title="View PDF" class="btn btn-success btn-simple btn-link" href="@Url.Action("CreateSalesOrderPDF","ClerkDashboard", new {id = item.soID})" role="button"><i class="fa fa-file-pdf-o"></i></a>
+                        <a rel="tooltip" title="View PDF" class="btn btn-success btn-simple btn-link" href="@Url.Action("CreateSalesOrderPDF", "ClerkDashboard", new {id = item.soID})" role="button" target="_blank"><i class="fa fa-file-pdf-o"></i></a>
                     }
                 }
-            </td>
+                </td>
         </tr>
     }
     </tbody>

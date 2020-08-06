@@ -1,8 +1,83 @@
-﻿
+﻿@model IEnumerable<SRIMAK.Models.SalesOrderModel>
+
 @{
     ViewData["Title"] = "Index";
     Layout = "~/Views/Shared/_LayoutResellerDashbaord.cshtml";
 }
 
-<h1>Index</h1>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Pending Orders @ViewBag.NoData</h4>
+                </div>
 
+
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                @if (ViewBag.NoData == "")
+                {
+                    <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                        <thead>
+                        <tr>
+                            <th>
+                                @Html.DisplayNameFor(model => model.soID)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.date)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.dueDate)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.Status)
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.soID)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.date)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.dueDate)
+                                </td>
+                                <td>
+                                    @{
+                                        var stat = "";
+                                        switch (item.Status)
+                                        {
+                                            case 1:
+                                                stat = "Pending";
+                                                break;
+
+                                            case 2:
+                                                stat = "Accepted";
+                                                break;
+
+                                            case 3:
+                                                stat = "Assigned to a distributor";
+                                                break;
+
+                                            case 4:
+                                                stat = "Payment Received";
+                                                break;
+                                        }
+                                    }
+                                    @stat
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>

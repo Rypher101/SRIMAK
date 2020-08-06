@@ -1,8 +1,97 @@
-﻿
+﻿@using Newtonsoft.Json
+@model IEnumerable<SRIMAK.Models.FinishedProductModel>
+
 @{
     ViewData["Title"] = "Index";
     Layout = "~/Views/Shared/_LayoutClerkDashboard.cshtml";
 }
 
-<h1>Index</h1>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Daily Production Suggestion</h4>
+                </div>
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                    <thead>
+                    <tr>
+                        <th>
+                            ID
+                        </th>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Monthly Suggestion
+                        </th>
+                        <th>
+                            Planned Value
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.rm_id)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Name)
+                            </td>
+                            <td>
+                                @Decimal.ToInt32(item.avgQTY)
+                            </td>
+                            <td>
+                                <input type="number" id="@item.rm_id" onchange="calVolume()" onkeyup="calVolume()" class="form-control" />
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+                
+                <h5 id="lblWaterConsumtion" style="margin-left: 20px"></h5>
+            </div>
+        </div>
+    </div>
+</div>
 
+<script type="text/javascript">
+    function calVolume() {
+        var waterVolume = 0;
+        var productObj = @Html.Raw(JsonConvert.SerializeObject(Model) as string);
+        var sizeObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Size) as string);
+
+        for (var i = 0; i < productObj.length; i++) {
+            var sizeValue = 0;
+            for (var j = 0; j < sizeObj.length; j++) {
+                if (sizeObj[j].Id == productObj[i].rm_id) {
+                    sizeValue = sizeObj[i].Size;
+                    break;
+                }
+            }
+
+            if (document.getElementById(productObj[i].rm_id.toString()).value < 0 || document.getElementById(productObj[i].rm_id.toString()).value == "") {
+                document.getElementById(productObj[i].rm_id.toString()).value = 0;
+            }
+
+            waterVolume += document.getElementById(productObj[i].rm_id.toString()).value * sizeValue;
+        }
+        waterVolume /= 1000;
+
+        if (waterVolume > 30000) {
+            document.getElementById("lblWaterConsumtion").style.color = "red";
+            document.getElementById("lblWaterConsumtion").innerHTML = "Total Water Consumption = " + waterVolume + " Liters  <p>*Consuming more than maximum allocated water liters<p>";
+        } else {
+            document.getElementById("lblWaterConsumtion").style.color = "black";
+            document.getElementById("lblWaterConsumtion").innerHTML = "Total Water Consumption = " + waterVolume + " Liters";
+        }
+    }
+
+    window.onload = function() {
+        calVolume();
+    }
+</script>

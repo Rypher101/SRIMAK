@@ -1,0 +1,118 @@
+﻿@using Newtonsoft.Json
+@model IEnumerable<DailyProductionModel>
+
+@{
+    ViewData["Title"] = "Consumption";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Consumption Report</h4>
+                </div>
+
+
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                    <thead>
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Date)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.rmID)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Name)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Production)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Wastage)
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @item.Date.ToString("D")
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.rmID)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Name)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Production)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Wastage)
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Water usage</h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="chartContainerWaterConsumption" style="height: 370px; margin: 0px auto 0px 100px; width: 900px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/Dashboards/assets/js/canvasjs.min.js"></script>
+
+<script type="text/javascript">
+    window.onload = function() {
+        var waterObj = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Water) as string);
+
+        var dataWaterConsumption = [{}];
+
+        for (var i = 0; i < waterObj.length; i++) {
+            if (i == 0) {
+                dataWaterConsumption = [{ label: waterObj[i].stringDate, y: waterObj[i].Production }];
+                continue;
+            }
+            dataWaterConsumption.push({ label: waterObj[i].stringDate, y: waterObj[i].Production });
+        }
+
+        var chart = new CanvasJS.Chart("chartContainerWaterConsumption",
+            {
+                theme: "light2", // "light1", "light2", "dark1", "dark2"
+                animationEnabled: true,
+                zoomEnabled: true,
+                title: {
+                    text: "Total Water Consumption By Date"
+                },
+                data: [
+                    {
+                        type: "area",
+                        dataPoints: dataWaterConsumption
+                    }
+                ]
+            });
+
+        chart.render();
+
+    }
+</script>

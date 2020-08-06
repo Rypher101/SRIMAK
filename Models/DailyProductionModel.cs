@@ -6,6 +6,7 @@ namespace SRIMAK.Models
     public class DailyProductionModel
     {
         public DateTime Date { get; set; }
+        public string stringDate { get; set; }
         [Display(Name = "Mat ID")] public int rmID { get; set; }
         public string Name { get; set; }
         public int Production { get; set; }

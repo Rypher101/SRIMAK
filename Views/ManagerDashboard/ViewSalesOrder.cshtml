@@ -1,0 +1,152 @@
+﻿@model IEnumerable<SRIMAK.Models.SalesOrderModel>
+
+@{
+    ViewData["Title"] = "ViewSalesOrder";
+    Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Sales Order - Details</h4>
+                </div>
+
+
+            </div>
+            <div class="card-body table-full-width table-responsive">
+                <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
+                        <thead>
+                            <tr>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.proID)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.prod)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.Cost)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.QTY)
+                                </th>
+                                @if (ViewBag.status == 1 || ViewBag.newQTY == 1)
+                                {
+                                    <th>
+                                        @Html.DisplayNameFor(model => model.newQTY)
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.proID)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.prod)
+                                    </td>
+                                    <td>
+                                        Rs. @Html.DisplayFor(modelItem => item.Cost)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.QTY)
+                                    </td>
+                                    @if (ViewBag.newQTY == 1)
+                                    {
+                                        <td>
+                                            @Html.DisplayFor(modelItem => item.newQTY)
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ">
+            <div class="card-header ">
+                <div class="row">
+                    <h4 class="card-title" style="margin-left: 20px;">Sales Order - Distributor</h4>
+                </div>
+            </div>
+            <div class="card-body ">
+                @if (ViewBag.status == 2)
+                {
+                <div class="col-md-6 offset-3">
+                    <h4>Distributor still not assigned</h4>
+                </div>
+                }
+                else if (ViewBag.status == 3 || ViewBag.status == 4)
+                {
+                    <div class="col-md-10 offset-4">
+                        <dl class="row">
+                            <dt class="col-sm-2">
+                                ID
+                            </dt>
+                            <dd class="col-sm-10">
+                                @ViewBag.disList.dis_id
+                            </dd>
+                            <dt class="col-sm-2">
+                                Name
+                            </dt>
+                            <dd class="col-sm-10">
+                                @ViewBag.disList.Name
+                            </dd>
+                            <dt class="col-sm-2">
+                                E-Mail
+                            </dt>
+                            <dd class="col-sm-10">
+                                @ViewBag.disList.Email
+                            </dd>
+                            <dt class="col-sm-2">
+                                Contact
+                            </dt>
+                            <dd class="col-sm-10">
+                                @ViewBag.disList.Contact
+                            </dd>
+                            <dt class="col-sm-2">
+                                Vehicle No
+                            </dt>
+                            <dd class="col-sm-10">
+                                @ViewBag.disList.vehi_no
+                            </dd>
+                            <dt class="col-sm-2">
+                                Vehicle Type
+                            </dt>
+                            <dd class="col-sm-10">
+                                @ViewBag.disList.vehi_type
+                            </dd>
+                            <dt class="col-sm-2">
+                                Rout
+                            </dt>
+                            <dd class="col-sm-10">
+                                @ViewBag.disList.Rout
+                            </dd>
+                            <dt class="col-sm-2">
+                                Town
+                            </dt>
+                            <dd class="col-sm-10">
+                                @ViewBag.disList.Town
+                            </dd>
+                        </dl>
+                    </div>
+                }
+                else
+                {
+                    <div class="col-md-6 offset-3">
+                        <h4>Order still pending</h4>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

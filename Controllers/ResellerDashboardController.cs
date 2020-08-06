@@ -21,6 +21,8 @@ namespace SRIMAK.Controllers
         // GET: ResellerDashboard
         public async Task<ActionResult> Index()
         {
+            if (HttpContext.Session.GetString("UID") == null) return RedirectToAction("Index", "Login");
+
             var cmd = DBConn.Connection.CreateCommand();
             //cmd.CommandText =
             //    "SELECT user_id,name,doa,contact,address,type,email,rout,town FROM user INNER JOIN rout ON user.rout = rout.rout_no WHERE user_id = @user";
@@ -39,7 +41,38 @@ namespace SRIMAK.Controllers
                     }
             }
 
-            return View();
+            var isNoData = true;
+            var output = new List<SalesOrderModel>();
+            cmd.CommandText = "SELECT so_id, date, due_date, dis_id, status FROM sales_order WHERE status != 4 ORDER BY date";
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    isNoData = false;
+                    var dis = reader.GetValue(3).Equals(DBNull.Value) ? 0 : reader.GetFieldValue<int>(3);
+                    var temp = new SalesOrderModel
+                    {
+                        soID = reader.GetFieldValue<int>(0),
+                        date = reader.GetFieldValue<DateTime>(1).ToString("yyyy-M-d dddd"),
+                        dueDate = reader.GetFieldValue<DateTime>(2).ToString("yyyy-M-d dddd"),
+                        disID = dis,
+                        Status = reader.GetFieldValue<int>(4)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            if (isNoData)
+            {
+                ViewBag.NoData = " : Ne pending sales orders.";
+            }
+            else
+            {
+                ViewBag.NoData = "";
+            }
+            SetActiveNavbar(1);
+            return View(output);
         }
 
         //ACCOUNT
@@ -66,6 +99,8 @@ namespace SRIMAK.Controllers
                         Rout = reader.GetFieldValue<int>(6),
                         Town = reader.GetFieldValue<string>(7)
                     };
+
+                    SetActiveNavbar(2);
                     ViewBag.date = reader.GetFieldValue<DateTime>(2);
                     return View(temp);
                 }
@@ -145,6 +180,7 @@ namespace SRIMAK.Controllers
                 }
             }
 
+            SetActiveNavbar(3);
             return View(output);
         }
 
@@ -310,6 +346,27 @@ namespace SRIMAK.Controllers
         }
 
         //MISC
+        public IActionResult MarkAsReceived(int id)
+        {
+            var cmd = DBConn.Connection.CreateCommand();
+            cmd.CommandText = "UPDATE sales_order SET status = 4 WHERE so_id = @soid";
+            cmd.Parameters.AddWithValue("@soid", id);
+            var recs = cmd.ExecuteNonQuery();
+
+            if (recs > 0)
+            {
+                TempData["Message"] = "Sales Order marked as received";
+                TempData["MsgType"] = "2";
+            }
+            else
+            {
+                TempData["Message"] = "Can't mark sales orde as received. Please try again";
+                TempData["MsgType"] = "4";
+            }
+
+            return RedirectToAction(nameof(SalesOrder));
+        }
+
         private async Task<List<FinishedProductModel>> GetFinishedProducts()
         {
             var output = new List<FinishedProductModel>();
@@ -415,6 +472,24 @@ namespace SRIMAK.Controllers
             var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
             var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
             return hash;
+        }
+
+        private void SetActiveNavbar(int x)
+        {
+            switch (x)
+            {
+                case 1:
+                    ViewData["Dashboard"] = "active";
+                    break;
+
+                case 2:
+                    ViewData["Account"] = "active";
+                    break;
+
+                case 3:
+                    ViewData["Sales"] = "active";
+                    break;
+            }
         }
     }
 }

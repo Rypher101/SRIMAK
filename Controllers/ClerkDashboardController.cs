@@ -19,86 +19,50 @@ namespace SRIMAK.Controllers
 
         private DBConnection DBConn { get; }
 
-        // GET: ClerkDashboard
         public async Task<ActionResult> Index()
         {
-            var cmd = DBConn.Connection.CreateCommand();
-            var rawList = new List<FinishedProductModel>();
-            cmd.CommandText = "SELECT t2.rm_id, name, AVG(t2.qty) FROM (SELECT finished_product.rm_id, SUM(sales_product.qty) AS qty FROM (finished_product INNER JOIN sales_product ON finished_product.pro_id = sales_product.pro_id) INNER JOIN sales_order ON sales_order.so_id = sales_product.so_id WHERE sales_order.status = 3 AND (YEAR(sales_order.date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(sales_order.date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)) GROUP BY finished_product.rm_id, DATE(date)) AS t2 INNER JOIN raw_materials ON t2.rm_id = raw_materials.rm_id GROUP BY rm_id";
-            await using (var reader = await cmd.ExecuteReaderAsync())
             {
-                while (await reader.ReadAsync())
-                {
-                    var temp = new FinishedProductModel()
-                    {
-                        rm_id = reader.GetFieldValue<int>(0),
-                        Name = reader.GetFieldValue<string>(1),
-                        avgQTY = reader.GetFieldValue<decimal>(2)
-                    };
-
-                    rawList.Add(temp);
-                }
-            }
-
-            return View(rawList);
-        }
-
-        private async Task<List<RawMaterialModel>> GetRawMaterials(int x = 0, string pram1 = "rm_id",
-            string pram2 = null, int supid = 0)
-        {
-            try
-            {
-                var output = new List<RawMaterialModel>();
                 var cmd = DBConn.Connection.CreateCommand();
-                if (x == 0)
-                {
-                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1";
-                }
-                else
-                {
-                    cmd.CommandText =
-                        "SELECT * FROM raw_materials WHERE status = 1 AND rm_id NOT IN (SELECT rm_id FROM material_supplier WHERE sup_id = @supid)";
-                    cmd.Parameters.AddWithValue("@supid", supid);
-                }
-
+                var rawList = new List<FinishedProductModel>();
+                cmd.CommandText = "SELECT raw_materials.rm_id, raw_materials.name, CEILING(IFNULL(sumQty,0)/30) AS finalQty FROM (SELECT pro_id, SUM(IF(new_qty>0, new_qty, qty)) AS sumQty FROM sales_product INNER JOIN sales_order ON sales_product.so_id = sales_order.so_id WHERE YEAR(sales_order.date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(sales_order.date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) GROUP BY sales_product.pro_id) AS T1 RIGHT JOIN finished_product ON T1.pro_id = finished_product.pro_id INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id";
                 await using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
                     {
-                        var tempDate = "";
-
-                        if (reader.GetDateTime(9) == DateTime.Parse("0001-1-1"))
-                            tempDate = "-";
-                        else
-                            tempDate = reader.GetDateTime(9).ToString("MMMM dd, yyyy");
-
-                        var temp = new RawMaterialModel
+                        var temp = new FinishedProductModel()
                         {
-                            Id = reader.GetFieldValue<int>(0),
+                            rm_id = reader.GetFieldValue<int>(0),
                             Name = reader.GetFieldValue<string>(1),
-                            Size = reader.GetFieldValue<int>(2),
-                            QTY = reader.GetFieldValue<int>(3),
-                            ROL = reader.GetFieldValue<int>(4),
-                            Buffer = reader.GetFieldValue<int>(5),
-                            Consumption = reader.GetFieldValue<int>(6),
-                            Stock = reader.GetFieldValue<int>(7),
-                            Request = reader.GetFieldValue<int>(8),
-                            ReqDate = tempDate
+                            avgQTY = reader.GetFieldValue<decimal>(2)
                         };
 
-                        output.Add(temp);
+                        rawList.Add(temp);
                     }
                 }
 
-                return output;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
+                var sizeList = new List<RawMaterialModel>();
+                cmd.CommandText = "SELECT rm_id, rm_size FROM raw_materials";
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var temp = new RawMaterialModel()
+                        {
+                            Id = reader.GetFieldValue<int>(0),
+                            Size = reader.GetFieldValue<int>(1)
+                        };
+
+                        sizeList.Add(temp);
+                    }
+                }
+
+                ViewBag.Size = sizeList;
+                SetActiveNavbar(1);
+                return View(rawList);
             }
         }
 
+        //CONSUMPTION
         public async Task<ActionResult> Consumption()
         {
             var outputMonth = new List<DailyProductionModel>();
@@ -107,7 +71,7 @@ namespace SRIMAK.Controllers
 
             var cmd = DBConn.Connection.CreateCommand();
             cmd.CommandText =
-                "SELECT date, daily_production.rm_id,name, prod, wast FROM daily_production INNER JOIN raw_materials ON daily_production.rm_id=raw_materials.rm_id WHERE YEAR(date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)";
+                "SELECT date, daily_production.rm_id,name, prod, wast FROM daily_production INNER JOIN raw_materials ON daily_production.rm_id=raw_materials.rm_id WHERE YEAR(date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH) AND MONTH(date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) ORDER BY date DESC";
             await using (var reader = await cmd.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
@@ -162,7 +126,7 @@ namespace SRIMAK.Controllers
                 }
             }
             ViewBag.Month12 = output12Month;
-
+            SetActiveNavbar(2);
             return View(outputMonth);
         }
 
@@ -224,6 +188,7 @@ namespace SRIMAK.Controllers
             return RedirectToAction(nameof(CreateNewConsumption));
         }
 
+        //SALES ORDER
         public async Task<ActionResult> SalesOrder()
         {
             var output = new List<SalesOrderModel>();
@@ -248,6 +213,7 @@ namespace SRIMAK.Controllers
                 }
             }
 
+            SetActiveNavbar(3);
             return View(output);
 
         }
@@ -300,7 +266,7 @@ namespace SRIMAK.Controllers
 
                 ViewBag.disList = tempDis;
             }
-            else if (ViewBag.status == 3)
+            else if (ViewBag.status == 3 || ViewBag.status == 4)
             {
                 var tempDis = new DistributorModel();
                 cmd.CommandText = "SELECT dis_id, name, email, contact, vehi_no, vehi_type, distributor.rout_no, town FROM distributor INNER JOIN rout ON distributor.rout_no=rout.rout_no WHERE dis_id=(SELECT dis_id FROM sales_order WHERE so_id=@soid)";
@@ -549,5 +515,141 @@ namespace SRIMAK.Controllers
             return report;
         }
 
+        //FINISHED PRODUCTS AND MATERIALS
+        public async Task<ActionResult> Materials(string sortPram = null, string typePram = null)
+        {
+            if (typePram == null || typePram == "ASC")
+                ViewData["sortType"] = "DESC";
+            else if (typePram == "DESC") ViewData["sortType"] = "ASC";
+
+            SetActiveNavbar(4);
+
+            if (sortPram == null)
+                return View(await GetRawMaterials(1));
+            return View(await GetRawMaterials(2, sortPram, typePram));
+        }
+
+        public async Task<ActionResult> FinishedProducts(string sortPram = null, string typePram = null)
+        {
+            var output = new List<FinishedProductModel>();
+            var cmd = DBConn.Connection.CreateCommand();
+
+            if (sortPram == null)
+                cmd.CommandText =
+                    "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id WHERE finished_product.status = 1";
+            else
+                cmd.CommandText =
+                    "SELECT pro_id,finished_Product.name,finished_product.qty,price,finished_product.rm_id,raw_materials.name FROM finished_product INNER JOIN raw_materials ON finished_product.rm_id = raw_materials.rm_id WHERE finished_product.status = 1 ORDER BY " +
+                    sortPram + " " + typePram;
+
+            if (typePram == null || typePram == "DESC")
+                ViewData["sortType"] = "ASC";
+            else
+                ViewData["sortType"] = "DESC";
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var temp = new FinishedProductModel
+                    {
+                        pro_id = reader.GetFieldValue<int>(0),
+                        Name = reader.GetFieldValue<string>(1),
+                        QTY = reader.GetFieldValue<int>(2),
+                        Price = reader.GetFieldValue<decimal>(3),
+                        rm_id = reader.GetFieldValue<int>(4),
+                        rm_name = reader.GetFieldValue<string>(5)
+                    };
+
+                    output.Add(temp);
+                }
+            }
+
+            SetActiveNavbar(5);
+            return View(output);
+        }
+
+        //MISC
+        private async Task<List<RawMaterialModel>> GetRawMaterials(int x = 0, string pram1 = "rm_id",
+            string pram2 = null, int supid = 0)
+        {
+            try
+            {
+                var output = new List<RawMaterialModel>();
+                var cmd = DBConn.Connection.CreateCommand();
+                if (x == 0)
+                {
+                    cmd.CommandText = "SELECT * FROM raw_materials WHERE status = 1";
+                }
+                else
+                {
+                    cmd.CommandText =
+                        "SELECT * FROM raw_materials WHERE status = 1 AND rm_id NOT IN (SELECT rm_id FROM material_supplier WHERE sup_id = @supid)";
+                    cmd.Parameters.AddWithValue("@supid", supid);
+                }
+
+                await using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var tempDate = "";
+
+                        if (reader.GetDateTime(9) == DateTime.Parse("0001-1-1"))
+                            tempDate = "-";
+                        else
+                            tempDate = reader.GetDateTime(9).ToString("MMMM dd, yyyy");
+
+                        var temp = new RawMaterialModel
+                        {
+                            Id = reader.GetFieldValue<int>(0),
+                            Name = reader.GetFieldValue<string>(1),
+                            Size = reader.GetFieldValue<int>(2),
+                            QTY = reader.GetFieldValue<int>(3),
+                            ROL = reader.GetFieldValue<int>(4),
+                            Buffer = reader.GetFieldValue<int>(5),
+                            Consumption = reader.GetFieldValue<int>(6),
+                            Stock = reader.GetFieldValue<int>(7),
+                            Request = reader.GetFieldValue<int>(8),
+                            ReqDate = tempDate
+                        };
+
+                        output.Add(temp);
+                    }
+                }
+
+                return output;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
+        private void SetActiveNavbar(int x)
+        {
+            switch (x)
+            {
+                case 1:
+                    ViewData["Dashboard"] = "active";
+                    break;
+
+                case 2:
+                    ViewData["Daily"] = "active";
+                    break;
+
+                case 3:
+                    ViewData["Sales"] = "active";
+                    break;
+
+                case 4:
+                    ViewData["Materials"] = "active";
+                    break;
+
+                case 5:
+                    ViewData["Products"] = "active";
+                    break;
+            }
+        }
     }
 }

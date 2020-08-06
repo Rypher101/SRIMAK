@@ -5,29 +5,6 @@
     Layout = "~/Views/Shared/_LayoutManagerDashboard.cshtml";
 }
 
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript">
-    google.charts.load('current', { 'packages': ['corechart'] });
-    google.charts.setOnLoadCallback(drawChart);
-
-    function drawChart() {
-
-        var data = google.visualization.arrayToDataTable([
-            ['Mode', 'Consumption'],
-            ['Production', 80],
-            ['wastage', 20]
-        ]);
-
-        var options = {
-            title: ''
-        };
-
-        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
-
-        chart.draw(data, options);
-    }
-</script>
-
 <div class="row">
     <div class="col-md-12">
         <div class="card ">
@@ -38,37 +15,48 @@
             <div class="card-body table-full-width table-responsive">
                 <table class="table table-hover table-striped" style="margin-left: 15px; margin-right: 20px;">
                     <thead>
-                        <tr>
-                            <th>
-                                Material ID
-                            </th>
-                            <th>
-                                Name
-                            </th>
-                            <th>
-                                Size
-                            </th>
-                            <th>
-                                QTY
-                            </th>
-                            <th>
-                                ROL
-                            </th>
-                            <th>
-                                Requested QTY
-                            </th>
-                            <th>
-                                Last Requested Date
-                            </th>
-                        </tr>
+                    <tr>
+                        <th>
+                            Material ID
+                        </th>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Size
+                        </th>
+                        <th>
+                            QTY
+                        </th>
+                        <th>
+                            ROL
+                        </th>
+                        <th>
+                            Requested QTY
+                        </th>
+                        <th>
+                            Last Requested Date
+                        </th>
+                    </tr>
                     </thead>
                     <tbody>
-                    @{ var clr = ""; }
+                    @{
+                        var clr = "";
+                        var aboutToReorder = false;
+                        var needToReorder = false;
+                    }
+
                     @foreach (var item in Model)
                     {
                         @if (item.QTY < item.ROL)
                         {
                             clr = "red";
+                            needToReorder = true;
+                        }
+                        else if (item.QTY * 100 / item.ROL - 100 < 5)
+                        {
+                            clr = "darkorange";
+                            aboutToReorder = true;
                         }
                         else
                         {
@@ -102,6 +90,18 @@
 
                     </tbody>
                 </table>
+                @{
+                    if (aboutToReorder)
+                    {
+                        <h5 style="color: darkorange; margin-left: 20px">* About to reorder</h5>
+                    }
+
+                    if (needToReorder)
+                    {
+                        <h5 style="color: red; margin-left: 20px">* Need to reorder</h5>
+                    }
+                }
+
             </div>
         </div>
     </div>
@@ -113,18 +113,46 @@
             <div class="card-header ">
                 <h4 class="card-title">Material Consumption Analysis</h4>
             </div>
-            <div class="card-body" style="margin: 0 auto; width: 70%;">
-                <div id="piechart" style="height: 500px; width: 900px;"></div>
+            <div class="card-body">
+                <div id="chartContainerConsumption" style="height: 450px; margin: 0px auto 0px 100px; width: 900px;"></div>
             </div>
         </div>
     </div>
 </div>
 
+<script src="~/Dashboards/assets/js/canvasjs.min.js"></script>
 <script type="text/javascript">
     window.onload = function() {
         if (@ViewBag.temp < 30 || @ViewBag.temp > 35) {
             var o = "o";
             demo.showNotification("Warning! Water temperature is not within acceptable parameters : @ViewBag.temp\C" + o.sup(), "4");
         }
+
+        var chart = new CanvasJS.Chart("chartContainerConsumption",
+            {
+                theme: "light2", // "light1", "light2", "dark1", "dark2"
+                exportEnabled: true,
+                animationEnabled: true,
+                title: {
+                    text: ""
+                },
+                data: [
+                    {
+                        type: "pie",
+                        startAngle: 25,
+                        toolTipContent: "<b>{label}</b>: {y}%",
+                        showInLegend: "true",
+                        legendText: "{label}",
+                        indexLabelFontSize: 16,
+                        indexLabel: "{label} - {y}%",
+                        dataPoints: [
+                            { y: @ViewBag.Prod, label: "Production" },
+                            { y: @ViewBag.Wast, label: "Wastage" }
+                        ]
+                    }
+                ]
+            });
+
+        chart.render();
     }
 </script>
